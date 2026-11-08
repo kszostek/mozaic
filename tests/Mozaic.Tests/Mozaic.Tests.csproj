@@ -22,4 +22,10 @@
     <ProjectReference Include="..\..\src\Mozaic.Core\Mozaic.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Shared between Mozaic and the settings app (keyboard labels for the guide and the cheat sheet). -->
+    <Compile Include="..\..\src\Shared\KeyboardModel.cs" Link="Shared\KeyboardModel.cs" />
+    <Compile Include="..\..\src\Shared\Localization.cs" Link="Shared\Localization.cs" />
+  </ItemGroup>
+
 </Project>

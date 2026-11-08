@@ -31,6 +31,10 @@ public partial class GuidePage : UserControl, IPage
             "Drag a window by its title bar onto another window to place it there; a blue preview shows where it will land. Drag an edge to resize. Hold $mod and drag with the left button to move a window, with the right button to resize it."),
         ("Launcher", "",
             "{launcher} starts any application, {launcher windows} jumps to any window, {launcher commands} lists every shortcut. {exec $term} opens a terminal and {kill} closes the focused window."),
+        ("Cheat sheet", "",
+            "Hold {cheatsheet} anywhere to see this keyboard on top of your windows; press Shift as well for the $mod + Shift keys. It disappears as soon as you let go."),
+        ("Groups and focus", "",
+            "Lines in the gaps join the windows of one tile (the part of the screen you split with {split v} or {split h}), and a current runs along them when the focus moves or while $mod is held. Windows you haven't used for a while fade a little, so the active one stands out."),
     };
 
     private readonly SettingsModel _model;
@@ -134,7 +138,7 @@ public partial class GuidePage : UserControl, IPage
     {
         var want = Normalize(_model.Doc.Resolve(command));
         var b = _model.Parsed.Bindings.FirstOrDefault(x => x.Mode == "default" && Normalize(x.Command) == want);
-        return b?.Combo.ToString().Replace("+", " + ");
+        return b?.Combo.ToString().Replace("+", " + ").Replace("grave", "`");
     }
 
     private void BuildBasics()

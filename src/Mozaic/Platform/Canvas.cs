@@ -45,6 +45,38 @@ internal sealed unsafe class Canvas : IDisposable
         Fill(new Rect(r.Right - width, r.Top, r.Right, r.Bottom), rgb);
     }
 
+    /// <summary>Rounded rectangle; <paramref name="border"/> null = no outline.</summary>
+    public void RoundRect(Rect r, int radius, uint fill, uint? border = null, int borderWidth = 1)
+    {
+        var brush = Gdi32.CreateSolidBrush(ToColorRef(fill));
+        var pen = border is uint b ? Gdi32.CreatePen(C.PS_SOLID, Math.Max(1, borderWidth), ToColorRef(b)) : Gdi32.GetStockObject(C.NULL_PEN);
+        var oldBrush = Gdi32.SelectObject(Hdc, brush);
+        var oldPen = Gdi32.SelectObject(Hdc, pen);
+        // GDI's RoundRect excludes the right/bottom edge of a pen-less shape; +1 keeps sizes consistent.
+        int extra = border == null ? 1 : 0;
+        Gdi32.RoundRect(Hdc, r.Left, r.Top, r.Right + extra, r.Bottom + extra, radius * 2, radius * 2);
+        Gdi32.SelectObject(Hdc, oldBrush);
+        Gdi32.SelectObject(Hdc, oldPen);
+        Gdi32.DeleteObject(brush);
+        if (border != null) Gdi32.DeleteObject(pen);
+    }
+
+    /// <summary>Word-wrapped text, centered vertically in <paramref name="r"/> (lines that don't fit are cut).</summary>
+    public void TextBlock(string text, Rect r, uint rgb, uint align = C.DT_CENTER)
+    {
+        if (text.Length == 0 || r.IsEmpty) return;
+        Gdi32.SetTextColor(Hdc, ToColorRef(rgb));
+        var calc = new RECT(r.Left, r.Top, r.Right, r.Top);
+        fixed (char* p = text)
+        {
+            User32.DrawTextW(Hdc, p, text.Length, &calc, align | C.DT_WORDBREAK | C.DT_NOPREFIX | C.DT_CALCRECT);
+            int h = Math.Min(calc.Bottom - calc.Top, r.Height);
+            int top = r.Top + (r.Height - h) / 2;
+            var rc = new RECT(r.Left, top, r.Right, top + h);
+            User32.DrawTextW(Hdc, p, text.Length, &rc, align | C.DT_WORDBREAK | C.DT_NOPREFIX | C.DT_END_ELLIPSIS);
+        }
+    }
+
     public void SetFont(IntPtr font)
     {
         var old = Gdi32.SelectObject(Hdc, font);
@@ -102,14 +134,18 @@ internal sealed unsafe class Canvas : IDisposable
 /// <summary>Caches GDI fonts per family/size/DPI.</summary>
 internal static class Fonts
 {
-    private static readonly Dictionary<(string, double, int, bool), IntPtr> s_cache = new();
+    private static readonly Dictionary<(string, double, int, int), IntPtr> s_cache = new();
 
-    public static IntPtr Get(string family, double points, int dpi, bool bold = false)
+    public static IntPtr Get(string family, double points, int dpi, bool bold = false) =>
+        Get(family, points, dpi, bold ? C.FW_BOLD : C.FW_NORMAL);
+
+    public static IntPtr Get(string family, double points, int dpi, int weight)
     {
-        var key = (family, points, dpi, bold);
+        points = Math.Round(points * 2) / 2; // half-point steps keep the cache small
+        var key = (family, points, dpi, weight);
         if (s_cache.TryGetValue(key, out var f)) return f;
         int height = -(int)Math.Round(points * dpi / 72.0);
-        f = Gdi32.CreateFontW(height, 0, 0, 0, bold ? C.FW_BOLD : C.FW_NORMAL, 0, 0, 0, C.DEFAULT_CHARSET,
+        f = Gdi32.CreateFontW(height, 0, 0, 0, weight, 0, 0, 0, C.DEFAULT_CHARSET,
             C.OUT_DEFAULT_PRECIS, C.CLIP_DEFAULT_PRECIS, C.CLEARTYPE_QUALITY, C.DEFAULT_PITCH, family);
         s_cache[key] = f;
         return f;

@@ -80,6 +80,7 @@ internal sealed partial class WindowManager
         _frame = new FocusFrame();
         _preview = new DropPreview();
         _osd = new Osd(this);
+        CreateEffects();
         _tabs = new TabBarPool(this);
         _exec = new CommandExecutor(this);
         _status = new StatusService(this);
@@ -94,7 +95,7 @@ internal sealed partial class WindowManager
 
         WinEvents.Handler = OnWinEvent;
         WinEvents.Start();
-        InputHooks.OnCommand = cmd => RunCommand(cmd, fromUser: true);
+        InputHooks.OnCommand = RunBoundCommand;
         InputHooks.OnDragStart = OnDragStart;
         InputHooks.OnDragMove = OnDragMove;
         InputHooks.OnDragEnd = OnDragEnd;
@@ -152,6 +153,7 @@ internal sealed partial class WindowManager
             ResetDecorations(showHidden: true);
             _hidden.Delete();
         }
+        DestroyEffects(1500);
         _tray?.Dispose();
         foreach (var b in _bars.Values) b.Destroy();
         _bars.Clear();
@@ -184,6 +186,11 @@ internal sealed partial class WindowManager
             foreach (var mw in _windows.Values)
                 if (mw.HiddenByUs && User32.IsWindow(mw.Hwnd)) User32.ShowWindowAsync(mw.Hwnd, C.SW_SHOWNA);
             _hidden.Delete();
+            if (_opacity != null)
+            {
+                foreach (var mw in _windows.Values) ResetOpacity(mw);
+                _opacity.Shutdown(500);
+            }
         }
         catch
         {
@@ -315,6 +322,7 @@ internal sealed partial class WindowManager
         InputHooks.SetBindings(Config.Bindings);
         InputHooks.SetMode(Mode);
         InputHooks.SetDragModifier(Config.FloatingModifier);
+        InputHooks.WatchModifier(Config.GroupLines == "on" ? ModKey : Modifiers.None);
     }
 
     private void ReportConfigErrors()
@@ -366,9 +374,12 @@ internal sealed partial class WindowManager
             {
                 if (mw.HiddenByUs) WindowOps.Show(mw);
                 WindowOps.SetBorderColor(mw, null);
+                ResetOpacity(mw);
             }
             _frame.Hide();
             _tabs.HideAll();
+            _lines.HideAll();
+            _cheatsheet.Hide();
         }
         else
         {
@@ -468,9 +479,12 @@ internal sealed partial class WindowManager
             if (v is Verdict.Tile or Verdict.Float)
                 found.Add((snap!, v == Verdict.Float, WindowQuery.FrameRect(hwnd)));
         }
+        // The z-order (top first) is the best guess of how recently each window was used.
+        var zIndex = new Dictionary<IntPtr, int>();
+        for (int i = 0; i < found.Count; i++) zIndex[found[i].Snap.Hwnd] = i;
         // Keep the existing left-to-right arrangement as far as possible.
         foreach (var (snap, floating, _) in found.OrderBy(f => f.Frame.Left).ThenBy(f => f.Frame.Top))
-            Manage(snap, floating, startup: true);
+            Manage(snap, floating, startup: true).FocusSeq = -zIndex[snap.Hwnd];
     }
 
     private void InitialFocus()
@@ -626,6 +640,7 @@ internal sealed partial class WindowManager
             if (mw.AppliedBorderColor != null) WindowOps.SetBorderColor(mw, null);
             if (mw.CornerApplied) WindowOps.SetCornerPreference(mw.Hwnd, "default");
         }
+        ResetOpacity(mw);
         bool wasFocused = Tree.FocusedWindow == mw.Node;
         Tree.Remove(mw.Node);
         if (wasFocused) _focusDirty = true;
@@ -645,6 +660,7 @@ internal sealed partial class WindowManager
         bool floating = n.InFloating;
         n.Fullscreen = false;
         Tree.Remove(n);
+        ResetOpacity(mw);
         _windows.Remove(mw.Hwnd);
         InputHooks.ManagedHandles.TryRemove(mw.Hwnd, out _);
         _detached[mw.Hwnd] = new DetachedEntry(mw, ws?.Name, floating, cloaked);

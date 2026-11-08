@@ -88,7 +88,7 @@ internal sealed class TestWindow : Win32Window
 
     public static unsafe int Run(string title)
     {
-        UseClassName("MozaicTestWindow");
+        // Mozaic's own class: ignored by every normally running Mozaic, managed only by --manage-only test instances.
         _ = new TestWindow(title);
         MSG msg;
         while (User32.GetMessageW(&msg, 0, 0, 0) > 0)

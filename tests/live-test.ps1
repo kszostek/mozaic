@@ -22,7 +22,45 @@ Add-Type -Namespace MzTest -Name Win -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
 [DllImport("user32.dll")] public static extern bool IsWindow(IntPtr h);
 [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+[DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int i);
+[DllImport("user32.dll")] public static extern bool GetLayeredWindowAttributes(IntPtr h, out uint key, out byte alpha, out uint flags);
+[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+[DllImport("user32.dll")] static extern bool EnumWindows(EnumProc cb, IntPtr l);
+[DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+[DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+delegate bool EnumProc(IntPtr h, IntPtr l);
+public struct RECT { public int Left, Top, Right, Bottom; }
+// Top-level windows of a process with the given title (e.g. Mozaic's group lines or cheat sheet).
+public static System.Collections.Generic.List<IntPtr> Find(uint pid, string title) {
+    var list = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((h, l) => {
+        uint p; GetWindowThreadProcessId(h, out p);
+        if (p != pid) return true;
+        var sb = new System.Text.StringBuilder(256); GetWindowText(h, sb, 256);
+        if (sb.ToString() == title) list.Add(h);
+        return true;
+    }, IntPtr.Zero);
+    return list;
+}
+// 255 = opaque (not layered)
+public static int Alpha(IntPtr h) {
+    if ((GetWindowLong(h, -20) & 0x80000) == 0) return 255;
+    uint k, f; byte a;
+    return GetLayeredWindowAttributes(h, out k, out a, out f) ? a : -1;
+}
 '@
+function Visible([uint32]$procId, [string]$title) { @([MzTest.Win]::Find($procId, $title) | Where-Object { [MzTest.Win]::IsWindowVisible($_) }) }
+function Alpha($w) { [MzTest.Win]::Alpha([IntPtr]$w.window) }
+function TestPid { (Get-CimInstance Win32_Process -Filter "Name='Mozaic.exe'" | Where-Object { $_.CommandLine -like '*--instance test*' } | Select-Object -First 1).ProcessId }
+# Number of gaps between neighbours inside the tiles of the visible workspace (= expected group lines). The
+# workspace's own split, and a container that is its only child, separate tiles: no lines there.
+function SplitGaps($n, [bool]$top = $true) {
+    $c = 0
+    if ($n.type -eq 'window' -or $n.layout -notin 'splith', 'splitv') { return 0 }
+    if (-not $top -and $n.nodes.Count -ge 2) { $c += $n.nodes.Count - 1 }
+    foreach ($k in $n.nodes) { $c += SplitGaps $k ($top -and $n.nodes.Count -eq 1) }
+    $c
+}
 
 $script:fail = 0; $script:pass = 0
 function Check([string]$name, [bool]$ok, [string]$detail = '') {
@@ -186,6 +224,60 @@ try {
     $v = Msg get_version
     Check 'get_version reports the executable' ($v.executable -like '*Mozaic.exe')
 
+    Write-Host "Opacity, group lines, cheat sheet:"
+    Cmd "[title='MZTEST C'] focus" | Out-Null
+    Cmd "[title='MZTEST B'] focus" | Out-Null
+    Start-Sleep -Milliseconds 300
+    $a = @{}; foreach ($n in 'A', 'B', 'C', 'D') { $a[$n] = Alpha (Win "MZTEST $n") }
+    Check 'active window is opaque' ($a.B -eq 255) "B=$($a.B)"
+    Check 'previously used window is 90%' ($a.C -eq 230) "C=$($a.C)"
+    Check 'older windows fade, not below 70%' ($a.A -lt 230 -and $a.A -ge 178 -and $a.D -lt 230 -and $a.D -ge 178 -and $a.A -ne $a.D) "A=$($a.A) D=$($a.D)"
+    $instance = TestPid
+    $ws = (Msg get_tree).nodes | ForEach-Object { $_.nodes } | Where-Object { $_.visible -and $_.nodes.Count -gt 0 } | Select-Object -First 1
+    $expected = SplitGaps $ws
+    $lines = Visible $instance 'Mozaic group line'
+    Check 'one group line per gap between neighbours' ($expected -gt 0 -and $lines.Count -eq $expected) "expected $expected, got $($lines.Count) ($(Layout))"
+    $thin = $true
+    foreach ($h in $lines) { $r = New-Object MzTest.Win+RECT; [MzTest.Win]::GetWindowRect($h, [ref]$r) | Out-Null; if ([math]::Min($r.Right - $r.Left, $r.Bottom - $r.Top) -ne 10) { $thin = $false } }
+    Check 'group lines fill the 10px gaps' $thin
+    Cmd 'layout tabbed' | Out-Null
+    Start-Sleep -Milliseconds 300
+    $ws = (Msg get_tree).nodes | ForEach-Object { $_.nodes } | Where-Object { $_.visible -and $_.nodes.Count -gt 0 } | Select-Object -First 1
+    Check 'tabs have no group lines' ((Visible $instance 'Mozaic group line').Count -eq (SplitGaps $ws)) "$((Visible $instance 'Mozaic group line').Count) vs $(SplitGaps $ws)"
+    Cmd 'layout toggle split' | Out-Null
+    Cmd 'cheatsheet show' | Out-Null
+    $sheet = Visible $instance 'Mozaic cheat sheet'
+    Check 'cheatsheet show' ($sheet.Count -eq 1)
+    if ($sheet.Count -eq 1) {
+        $r = New-Object MzTest.Win+RECT; [MzTest.Win]::GetWindowRect($sheet[0], [ref]$r) | Out-Null
+        Add-Type -AssemblyName System.Drawing
+        $bmp = New-Object System.Drawing.Bitmap ($r.Right - $r.Left), ($r.Bottom - $r.Top)
+        $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($r.Left, $r.Top, 0, 0, $bmp.Size); $g.Dispose()
+        $bmp.Save((Join-Path $tmp 'cheatsheet.png')); $bmp.Dispose()
+    }
+    Cmd 'cheatsheet hide' | Out-Null
+    Check 'cheatsheet hide' ((Visible $instance 'Mozaic cheat sheet').Count -eq 0)
+    $r = Msg command 'cheatsheet sideways'
+    Check 'cheatsheet rejects bad arguments' (-not $r[0].success)
+
+    Write-Host "Crash leaves no translucent windows:"
+    Cmd "[title='MZTEST C'] focus" | Out-Null
+    Start-Sleep -Milliseconds 300
+    Check 'some windows are translucent before the crash' (@(Wins | Where-Object { (Alpha $_) -lt 255 }).Count -ge 2)
+    Stop-Process -Id $instance -Force
+    Start-Sleep -Milliseconds 500
+    # Start again with the effect off: whatever the killed instance left translucent must become opaque.
+    (Get-Content $cfg) + 'inactive_opacity off' | Set-Content -Encoding UTF8 $cfg
+    $wm = Start-Process $exe -ArgumentList '--instance', 'test', '--config', "`"$cfg`"", '--manage-only', '^MZTEST', '--no-hotkeys', '--no-tray', '--debug' -PassThru
+    Start-Sleep -Seconds 2
+    $left = @(Wins | Where-Object { (Alpha $_) -ne 255 })
+    Check 'next start makes them opaque again' ($left.Count -eq 0) "$(($left | ForEach-Object { "$($_.title)=$(Alpha $_)" }) -join ', ')"
+    Check 'layout survives the crash' (@(Wins).Count -eq 4) "$(@(Wins).Count) windows"
+    @(Get-Content $cfg | Where-Object { $_ -ne 'inactive_opacity off' }) | Set-Content -Encoding UTF8 $cfg
+    Cmd 'reload' | Out-Null
+    Start-Sleep -Milliseconds 300
+    Check 'reload turns the effect back on' (@(Wins | Where-Object { (Alpha $_) -lt 255 }).Count -eq 3)
+
     Write-Host "External changes:"
     $c = Win 'MZTEST C'
     Add-Type -Namespace MzTest -Name Mv -MemberDefinition '[DllImport("user32.dll")] public static extern bool MoveWindow(IntPtr h, int x, int y, int w, int hh, bool r);'
@@ -214,6 +306,8 @@ finally {
         Start-Sleep -Seconds 1
         $hidden = @($testWindows | Where-Object { -not $_.HasExited -and $_.MainWindowHandle -ne 0 -and -not [MzTest.Win]::IsWindowVisible($_.MainWindowHandle) })
         Check 'exit shows hidden windows again' ($hidden.Count -eq 0) "$($hidden.Count) hidden"
+        $translucent = @($testWindows | Where-Object { -not $_.HasExited -and $_.MainWindowHandle -ne 0 -and [MzTest.Win]::Alpha($_.MainWindowHandle) -ne 255 })
+        Check 'exit leaves every window opaque' ($translucent.Count -eq 0) "$($translucent.Count) translucent"
         foreach ($p in $testWindows) { if (-not $p.HasExited) { $p.Kill() } }
         Get-Process Mozaic -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne $PID -and $_.MainWindowTitle -like 'MZTEST*' } | Stop-Process -Force -ErrorAction SilentlyContinue
     }

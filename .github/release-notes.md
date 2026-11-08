@@ -15,6 +15,7 @@ Requirements: Windows 11, x64. No administrator rights needed.
 **"Windows protected your PC"**: the exes are not code-signed, so SmartScreen may warn on first start. Click
 *More info* → *Run anyway*.
 
-**First steps**: `$mod` is **Alt**. `Alt+Enter` opens a terminal, `Alt+d` the launcher, `Alt+F1` lists every
-shortcut, `Alt+h/j/k/l` moves focus (add Shift to move the window), `Alt+1…0` switches workspace. Exiting Mozaic
-(`Alt+Shift+e` or the tray menu) always shows every window again.
+**First steps**: `$mod` is **Alt**. Hold ``Alt+` `` to see every shortcut on a keyboard (add Shift for the second
+layer). `Alt+Enter` opens a terminal, `Alt+d` the launcher, `Alt+F1` lists every shortcut, `Alt+h/j/k/l` moves
+focus (add Shift to move the window), `Alt+1…0` switches workspace. Exiting Mozaic (`Alt+Shift+e` or the tray
+menu) always shows every window again and makes every window opaque.

@@ -187,6 +187,12 @@ internal struct ICONINFO
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal struct BLENDFUNCTION
+{
+    public byte BlendOp, BlendFlags, SourceConstantAlpha, AlphaFormat;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal struct BITMAPINFOHEADER
 {
     public uint biSize;
@@ -286,6 +292,9 @@ internal static class C
     public const int IDC_ARROW = 32512, IDC_HAND = 32649, IDC_SIZEALL = 32646;
     public const int HTCLIENT = 1, HTTRANSPARENT = -1;
     public const uint LWA_COLORKEY = 1, LWA_ALPHA = 2;
+    public const uint ULW_ALPHA = 2;
+    public const byte AC_SRC_OVER = 0, AC_SRC_ALPHA = 1;
+    public const uint RDW_INVALIDATE = 0x1, RDW_ERASE = 0x4, RDW_ALLCHILDREN = 0x80, RDW_FRAME = 0x400;
     public const uint SPI_SETWORKAREA = 0x002F;
     public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
     public const uint TOKEN_QUERY = 0x0008;
@@ -305,12 +314,15 @@ internal static class C
 
     // DrawText
     public const uint DT_LEFT = 0, DT_CENTER = 1, DT_RIGHT = 2, DT_VCENTER = 4, DT_SINGLELINE = 0x20,
-        DT_NOPREFIX = 0x800, DT_END_ELLIPSIS = 0x8000, DT_CALCRECT = 0x400, DT_NOCLIP = 0x100;
+        DT_NOPREFIX = 0x800, DT_END_ELLIPSIS = 0x8000, DT_CALCRECT = 0x400, DT_NOCLIP = 0x100,
+        DT_WORDBREAK = 0x10;
 
     // GDI
     public const int TRANSPARENT = 1, OPAQUE = 2;
     public const uint SRCCOPY = 0x00CC0020;
-    public const int FW_NORMAL = 400, FW_BOLD = 700;
+    public const int FW_NORMAL = 400, FW_SEMIBOLD = 600, FW_BOLD = 700;
+    public const int NULL_BRUSH = 5, NULL_PEN = 8;
+    public const uint BI_RGB = 0, DIB_RGB_COLORS = 0;
     public const uint CLEARTYPE_QUALITY = 5, DEFAULT_CHARSET = 1, OUT_DEFAULT_PRECIS = 0, CLIP_DEFAULT_PRECIS = 0,
         DEFAULT_PITCH = 0;
     public const int PS_SOLID = 0;
@@ -610,6 +622,22 @@ internal static unsafe partial class User32
 
     [LibraryImport(Dll)]
     public static partial IntPtr GetShellWindow();
+
+    [LibraryImport(Dll, SetLastError = true)]
+    public static partial IntPtr SetWindowLongPtrW(IntPtr hwnd, int index, IntPtr value);
+
+    [LibraryImport(Dll)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool GetLayeredWindowAttributes(IntPtr hwnd, out uint key, out byte alpha, out uint flags);
+
+    [LibraryImport(Dll)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool UpdateLayeredWindow(IntPtr hwnd, IntPtr hdcDst, POINT* ptDst, SIZE* size, IntPtr hdcSrc,
+        POINT* ptSrc, uint key, BLENDFUNCTION* blend, uint flags);
+
+    [LibraryImport(Dll)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool RedrawWindow(IntPtr hwnd, IntPtr rect, IntPtr region, uint flags);
 
     [LibraryImport(Dll)]
     public static partial IntPtr SetFocus(IntPtr hwnd);

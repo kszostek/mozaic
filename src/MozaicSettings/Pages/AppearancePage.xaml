@@ -44,6 +44,34 @@
                           SelectedValue="{Binding CornerStyle}" MinWidth="220" />
             </l:SettingRow>
 
+            <TextBlock Text="{l:T Effects}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE945;" Title="{l:T Group lines}"
+                          Description="{l:T 'Lines in the gaps between windows of the same tile show which windows belong together. A current flows along them when the focus or layout changes.'}">
+                <ComboBox ItemsSource="{Binding Source={x:Static l:SettingsModel.GroupLineOptions}}" SelectedValuePath="Value" DisplayMemberPath="Label"
+                          SelectedValue="{Binding GroupLines}" MinWidth="220" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE790;" Title="{l:T Color of the current}" Description="{l:T 'Color of the group lines and the current flowing along them.'}">
+                <l:ColorBox Color="{Binding GroupLinesColor}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE706;" Title="{l:T Fade windows you are not using}"
+                          Description="{l:T 'The active window is opaque; the longer ago a window was used, the more transparent it gets.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding InactiveOpacityOn}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE706;" Title="{l:T Previously used window}" Description="{l:T 'Opacity of the window you used before the active one.'}"
+                          IsEnabled="{Binding InactiveOpacityOn}">
+                <StackPanel Orientation="Horizontal">
+                    <Slider Minimum="30" Maximum="100" Width="220" Value="{Binding OpacityLastUsed}" IsSnapToTickEnabled="True" TickFrequency="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding OpacityLastUsed, StringFormat={}{0}%}" Width="44" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE706;" Title="{l:T Windows used long ago}" Description="{l:T 'Older windows fade down to this opacity.'}"
+                          IsEnabled="{Binding InactiveOpacityOn}">
+                <StackPanel Orientation="Horizontal">
+                    <Slider Minimum="30" Maximum="100" Width="220" Value="{Binding OpacityMin}" IsSnapToTickEnabled="True" TickFrequency="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding OpacityMin, StringFormat={}{0}%}" Width="44" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </l:SettingRow>
+
             <TextBlock Text="{l:T Font}" Style="{StaticResource SectionTitle}" />
             <l:SettingRow Icon="&#xE8D2;" Title="{l:T 'Font of the bar, tabs and launcher'}">
                 <StackPanel Orientation="Horizontal">

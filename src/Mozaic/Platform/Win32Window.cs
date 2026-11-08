@@ -8,7 +8,7 @@ namespace Mozaic.Platform;
 /// <summary>Base class for Mozaic's own native windows (bar, tab bars, tray owner, overlays, launcher).</summary>
 internal abstract unsafe class Win32Window
 {
-    private static string ClassName = "MozaicWindow";
+    private const string ClassName = "MozaicWindow";
     private static readonly Dictionary<IntPtr, Win32Window> s_windows = new();
     private static Win32Window? s_creating;
     private static bool s_registered;
@@ -20,12 +20,6 @@ internal abstract unsafe class Win32Window
     public static IntPtr Instance { get; } = Kernel32.GetModuleHandleW(null);
 
     public static bool IsOwnWindow(IntPtr hwnd) => s_windows.ContainsKey(hwnd);
-
-    /// <summary>Use a different window class (test windows must not look like Mozaic's own windows).</summary>
-    public static void UseClassName(string name)
-    {
-        if (!s_registered) ClassName = name;
-    }
 
     private static void EnsureClass()
     {

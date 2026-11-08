@@ -45,10 +45,14 @@ the default config — the guide in the settings app draws the same keyboard fro
 
 ![Resize mode](docs/images/keyboard-resize.png)
 
-Highlights: `$mod+Enter` terminal · `$mod+d` launcher · `$mod+Shift+d` window switcher · `$mod+F1` searchable
-list of all shortcuts and commands · `$mod+h/j/k/l` focus, add Shift to move · `$mod+1…0` workspaces ·
+Highlights: **hold `` $mod+` ``** to see this keyboard on screen (add Shift for the second layer; it disappears
+when you let go) · `$mod+Enter` terminal · `$mod+d` launcher · `$mod+Shift+d` window switcher · `$mod+F1`
+searchable list of all shortcuts and commands · `$mod+h/j/k/l` focus, add Shift to move · `$mod+1…0` workspaces ·
 `$mod+b`/`$mod+v` split · `$mod+w`/`$mod+s`/`$mod+e` tabbed/stacked/split · `$mod+f` fullscreen ·
-`$mod+Shift+space` floating · `` $mod+` `` previous window · `$mod+r` resize mode · `$mod+Shift+c` reload.
+`$mod+Shift+space` floating · `$mod+o` previous window · `$mod+r` resize mode · `$mod+Shift+c` reload.
+
+The cheat sheet works with older configs too: unless your config binds `` $mod+` `` / `` $mod+Shift+` `` or uses
+`cheatsheet` on other keys, Mozaic binds those two keys for it.
 
 ### Mouse
 
@@ -69,7 +73,7 @@ because the editor changes only the lines it has to.
 |---|---|
 | **Guide** | Keyboard cheat sheet per modifier layer and binding mode (hover a key for the exact command), the basics, *show at startup* |
 | **General** | `$mod` (Alt/Win), terminal, autotiling, focus behaviour, mouse dragging, layout memory, on-screen display |
-| **Appearance** | Gaps, smart gaps, colored Windows 11 borders, focus frame, corner style, font, window colors — with a live preview |
+| **Appearance** | Gaps, smart gaps, colored Windows 11 borders, focus frame, corner style, group lines and their color, fading of unused windows, font, window colors — with a live preview |
 | **Bar** | Position, height, workspace buttons and app icons, title, status blocks and date format, status program, colors, auto-hide the Windows taskbar |
 | **Keyboard shortcuts** | Search, add, edit (press the keys to record them), delete; conflicts are marked |
 | **Window rules** | Pick a running window and choose: float, float on every workspace, open on workspace N, don't focus, don't manage, or any commands |
@@ -101,6 +105,9 @@ desktops.
 | **Windows 11 integration** | Focus shown with the native colored window border, optional square corners, invisible resize borders compensated so gaps are pixel-exact. |
 | **Mouse tiling** | Drag-and-drop re-tiling with preview, edge-drag resizing, `$mod`+drag. Snap Assist is dismissed after a tiled drag. |
 | **Launcher & command palette** | Fuzzy launcher over the whole Start menu (Store apps too) and `PATH`, ranked by usage; window switcher; `$mod+F1` lists every shortcut and command. |
+| **Cheat sheet while you hold the keys** | Hold `` $mod+` `` and every shortcut appears on a keyboard over your windows, colored by what it does; Shift switches to the `$mod+Shift` keys. |
+| **See the groups** | Lines in the gaps join the windows of one tile — a part of the workspace you split into several windows (the focused tile brightest). A current flows along them when the focus or layout changes and while `$mod` is held — and costs nothing the rest of the time. Color: `group_lines_color`. |
+| **Fade what you aren't using** | The active window is opaque, the one used before it 90%, older ones fade further (down to 70%). Never leaves a window translucent, even if Mozaic is killed. |
 | **`focus last`** | Jump back to the previously focused window, on any workspace. |
 | **Bar with app icons, OSD** | Workspace buttons show the icons of their apps; switching workspace or mode flashes its name in the middle of the screen. |
 | **Diagnostics** | "Why isn't this window tiled?" — every window with Mozaic's reason (elevated, tool window, ignore rule, …). |
@@ -132,6 +139,10 @@ Extensions (all optional):
 autotiling no                     # spiral tiling
 osd yes                           # show workspace / mode name when it changes
 welcome yes                       # open the shortcut guide when Mozaic starts
+group_lines on                    # on | always (current flows all the time) | off
+group_lines_color #2e9ef4         # default: the client.focused indicator color
+inactive_opacity 90 70            # previously used window %, oldest windows %; or off
+opacity_ignore [process="^mpv$"]  # windows that always stay opaque
 ignore [process="SomeOverlay"]    # never manage matching windows
 window_border_colors yes          # color native borders with client.* child_border colors
 corner_style default              # default | square | round | small
@@ -149,7 +160,8 @@ bar {
 }
 ```
 
-Extra commands: `focus last`, `balance`, `launcher [apps|windows|commands]`, `settings`, `confirm "question?" <command>`,
+Extra commands: `cheatsheet [show|hide|toggle]` (bound to a key: shown while the key is held), `focus last`, `balance`,
+`launcher [apps|windows|commands]`, `settings`, `confirm "question?" <command>`,
 `pause [on|off]`, `retile`, `hotkeys on|off`.
 
 ## mozaic-msg
@@ -188,21 +200,28 @@ releasing Alt/Win never opens a menu bar or the Start menu. To use Win, pick it 
 
 ```
 src/Mozaic.Core      pure logic: i3 tree, layout engine, config + command parsers, lossless config editing
-src/Mozaic           Win32 layer: hooks, window control, sync engine, bar, tabs, OSD, tray, launcher, IPC
+src/Mozaic           Win32 layer: hooks, window control, sync engine, bar, tabs, OSD, cheat sheet, group lines,
+                     opacity, tray, launcher, IPC
 src/MozaicSettings   WPF settings app and keyboard guide
 src/MozaicMsg        mozaic-msg CLI
+src/Shared           code linked into both apps (IPC protocol, translations, keyboard labels)
 tests/               xUnit tests + live end-to-end tests
 ```
 
 ```powershell
-dotnet test tests/Mozaic.Tests                 # 64 unit tests (tree semantics, layout, parsers, config editing)
-powershell -File tests\live-test.ps1          # 41 checks against real windows (isolated instance)
-powershell -File tests\input-test.ps1         # hotkeys, title-bar drag, $mod+drag, edge resize
+dotnet test tests/Mozaic.Tests                 # 71 unit tests (tree, layout, group lines, parsers, config editing)
+powershell -File tests\live-test.ps1          # 55 checks against real windows (isolated instance)
+powershell -File tests\input-test.ps1         # hotkeys, cheat sheet, title-bar drag, $mod+drag, edge resize
 ```
 
 The live tests run a separate instance (`--instance test --manage-only ^MZTEST --no-hotkeys`) that only manages
-its own test windows and aborts if anything else would be managed. `input-test.ps1` moves the mouse and sends keys
-for a few seconds.
+its own test windows and aborts if anything else would be managed. The test windows use Mozaic's own window
+class, so a Mozaic that manages your desktop at the same time ignores them. `input-test.ps1` moves the mouse and
+sends keys for a few seconds; with `-KeysOnly` it skips the mouse part (use that while your own Mozaic is
+running, since a drag could land on one of its windows).
+
+`MozaicSettings.exe --page appearance --render-to page.png [--render-height 2300]` renders a settings page to a
+PNG without opening a window (for documentation and checks).
 
 GitHub Actions builds and unit-tests every push. To publish a release, push a version tag — the workflow builds
 `Mozaic-<version>-win-x64.zip` and creates the release with the notes from `.github/release-notes.md`:

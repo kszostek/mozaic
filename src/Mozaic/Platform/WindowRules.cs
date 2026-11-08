@@ -60,7 +60,10 @@ internal static class WindowRules
         if ((style & C.WS_CHILD) != 0) { reason = "child window"; return Verdict.Ignore; }
 
         string cls = WindowQuery.ClassName(hwnd);
-        if (IgnoredClasses.Contains(cls)) { reason = "system window"; return Verdict.Ignore; }
+        // Test windows (--test-window) use Mozaic's window class, so a Mozaic that runs normally — e.g. the one
+        // managing your desktop while the tests run — never touches them; only a --manage-only instance does.
+        bool testWindow = ManageOnly != null && cls == "MozaicWindow" && ManageOnly.IsMatch(WindowQuery.Title(hwnd));
+        if (IgnoredClasses.Contains(cls) && !testWindow) { reason = "system window"; return Verdict.Ignore; }
         if ((ex & C.WS_EX_TOOLWINDOW) != 0 && (ex & C.WS_EX_APPWINDOW) == 0) { reason = "tool window"; return Verdict.Ignore; }
         if ((ex & C.WS_EX_NOACTIVATE) != 0 && (ex & C.WS_EX_APPWINDOW) == 0) { reason = "window that cannot be focused"; return Verdict.Ignore; }
 

@@ -61,6 +61,17 @@ autotiling no
 osd yes
 # Open the shortcut guide (Mozaic Settings) every time Mozaic starts
 welcome yes
+# Lines in the gaps between windows of the same tile (a part of the workspace you
+# split into several windows, e.g. with $mod+v). A current flows along them when
+# the focus or layout changes and while $mod is held.
+# on | always (current flows all the time) | off
+group_lines on
+group_lines_color #2e9ef4
+# Fade windows by how recently they were used: the active window is opaque, the
+# previously used one 90%, older ones less, down to 70%. "off" disables it.
+inactive_opacity 90 70
+# Windows that always stay opaque:
+# opacity_ignore [process="^mpv$"]
 
 # --- Colors ------------------------------------------------------------------
 # class                 border  backgr. text    indicator child_border
@@ -88,8 +99,13 @@ bindsym $mod+d launcher
 bindsym $mod+Shift+d launcher windows
 bindsym $mod+F1 launcher commands
 
+# Hold to show every shortcut on a keyboard (like the guide); hold Shift too
+# for the $mod+Shift shortcuts. Release the keys and it disappears.
+bindsym $mod+grave cheatsheet
+bindsym $mod+Shift+grave cheatsheet
+
 # Jump back to the previously focused window (any workspace)
-bindsym $mod+grave focus last
+bindsym $mod+o focus last
 
 # Change focus (vim keys)
 bindsym $mod+h focus left

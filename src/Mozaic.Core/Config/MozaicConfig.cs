@@ -14,7 +14,8 @@ public sealed record ConfigError(string File, int Line, string Message)
     public override string ToString() => Line > 0 ? $"{Path.GetFileName(File)}:{Line}: {Message}" : Message;
 }
 
-public sealed record Binding(string Mode, KeyCombo Combo, string Command, bool OnRelease);
+/// <param name="Implicit">Added by Mozaic because the config doesn't bind it (not a line in the file).</param>
+public sealed record Binding(string Mode, KeyCombo Combo, string Command, bool OnRelease, bool Implicit = false);
 
 public sealed record WindowRule(Criteria Criteria, string Command);
 
@@ -114,6 +115,19 @@ public sealed class MozaicConfig
     public bool Osd { get; set; } = true;
     /// <summary>Open the shortcut guide (settings app) when Mozaic starts.</summary>
     public bool Welcome { get; set; }
+    /// <summary>
+    /// Animated "current" lines in the gaps between windows of the same container: "on" (flows after focus or
+    /// layout changes and while $mod is held, otherwise a static glow), "always" (flows all the time) or "off".
+    /// </summary>
+    public string GroupLines { get; set; } = "on";
+    /// <summary>Color of the group lines (0xRRGGBB); null = the client.focused indicator color.</summary>
+    public uint? GroupLinesColor { get; set; }
+    /// <summary>Opacity in percent of the most recently used inactive window; null turns the effect off.</summary>
+    public int? InactiveOpacity { get; set; } = 90;
+    /// <summary>Opacity in percent that windows used long ago fade down to.</summary>
+    public int InactiveOpacityMin { get; set; } = 70;
+    /// <summary>Windows that always stay fully opaque.</summary>
+    public List<Criteria> OpacityIgnore { get; } = new();
 
     public List<ConfigError> Errors { get; } = new();
 }

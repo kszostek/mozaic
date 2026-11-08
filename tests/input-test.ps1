@@ -1,9 +1,11 @@
 <#
   Tests the keyboard hook and mouse dragging with synthetic input, in an isolated instance that
   only manages "MZTEST*" windows. NOTE: this moves your mouse cursor and sends key presses for a
-  few seconds — don't touch the mouse/keyboard while it runs. Uses unusual hotkeys (Alt+Shift+F9..F11).
+  few seconds — don't touch the mouse/keyboard while it runs. Uses unusual hotkeys (Alt+Shift+F9..F11)
+  and Alt+` (cheat sheet). -KeysOnly skips the mouse dragging (use it while another Mozaic manages your
+  desktop: a drag could land on one of its windows).
 #>
-param([switch]$Published)
+param([switch]$Published, [switch]$KeysOnly)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot
 $exe = if ($Published) { "$root\publish\Mozaic.exe" } else { "$root\src\Mozaic\bin\Debug\net10.0-windows\Mozaic.exe" }
@@ -14,6 +16,17 @@ Add-Type -Namespace MzIn -Name U -MemberDefinition @'
 [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, UIntPtr extra);
 [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
 [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+[DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+[DllImport("user32.dll")] static extern bool EnumWindows(EnumProc cb, IntPtr l);
+[DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+[DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+delegate bool EnumProc(IntPtr h, IntPtr l);
+public static System.Collections.Generic.List<IntPtr> Find(uint pid, string title) {
+    var list = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((h, l) => { uint p; GetWindowThreadProcessId(h, out p); if (p != pid) return true;
+        var sb = new System.Text.StringBuilder(256); GetWindowText(h, sb, 256); if (sb.ToString() == title) list.Add(h); return true; }, IntPtr.Zero);
+    return list;
+}
 '@
 function Key([byte[]]$mods, [byte]$key) {
     foreach ($m in $mods) { [MzIn.U]::keybd_event($m, 0, 0, [UIntPtr]::Zero) }
@@ -73,6 +86,31 @@ try {
     Check 'Alt+Shift+F11 -> workspace 7' ((@(Q get_workspaces) | Where-Object focused).name -eq '7')
     & $msg --instance input 'workspace 1' | Out-Null; Start-Sleep -Milliseconds 500
 
+    Write-Host 'Cheat sheet while Alt+` is held:'
+    $inst = (Get-CimInstance Win32_Process -Filter "Name='Mozaic.exe'" | Where-Object { $_.CommandLine -like '*--instance input*' } | Select-Object -First 1).ProcessId
+    function Sheet { @([MzIn.U]::Find($inst, 'Mozaic cheat sheet') | Where-Object { [MzIn.U]::IsWindowVisible($_) }).Count }
+    [MzIn.U]::keybd_event(0x12, 0, 0, [UIntPtr]::Zero)          # Alt down
+    [MzIn.U]::keybd_event(0xC0, 0, 0, [UIntPtr]::Zero)          # ` down
+    Start-Sleep -Milliseconds 300
+    Check 'shown while held' ((Sheet) -eq 1)
+    [MzIn.U]::keybd_event(0x10, 0, 0, [UIntPtr]::Zero); Start-Sleep -Milliseconds 200   # Shift: other layer
+    Check 'still shown with Shift' ((Sheet) -eq 1)
+    [MzIn.U]::keybd_event(0x10, 0, 2, [UIntPtr]::Zero); Start-Sleep -Milliseconds 100
+    [MzIn.U]::keybd_event(0xC0, 0, 2, [UIntPtr]::Zero)          # ` up
+    Start-Sleep -Milliseconds 150
+    Check 'hidden when ` is released' ((Sheet) -eq 0)
+    [MzIn.U]::keybd_event(0x12, 0, 2, [UIntPtr]::Zero)          # Alt up
+    Key @(0x12) 0xC0
+    Check 'a short tap does not leave it open' ((Sheet) -eq 0)
+    [MzIn.U]::keybd_event(0x12, 0, 0, [UIntPtr]::Zero); [MzIn.U]::keybd_event(0xC0, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 300
+    [MzIn.U]::keybd_event(0x12, 0, 2, [UIntPtr]::Zero)          # Alt released first
+    Start-Sleep -Milliseconds 150
+    Check 'hidden when Alt is released' ((Sheet) -eq 0)
+    [MzIn.U]::keybd_event(0xC0, 0, 2, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 300
+    if (-not $KeysOnly) {
+
     Write-Host 'Dragging a tiled window by its title bar:'
     $a = (Win 'MZTEST A').rect; $b = (Win 'MZTEST B').rect
     Drag ($b.x + 200) ($b.y + 15) ($a.x + 40) ($a.y + $a.height / 2)
@@ -91,6 +129,7 @@ try {
     Drag ($b.x + $b.width / 2) ($b.y + $b.height + 2) ($b.x + $b.width / 2) ($b.y + $b.height + 300)
     $after = (Win 'MZTEST B').rect.height
     Check 'edge drag resized the split' ($after -gt $before + 200) "$before -> $after"
+    }
 }
 finally {
     & $msg --instance input exit 2>$null | Out-Null

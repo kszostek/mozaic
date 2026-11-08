@@ -53,7 +53,11 @@ internal sealed class MainWindow : Win32Window
                 result = 1;
                 return true;
             case C.WM_WTSSESSION_CHANGE when (int)wParam == C.WTS_SESSION_UNLOCK:
+                _wm.OnSessionLock(false);
                 _wm.OnDisplayChanged("session unlock");
+                return true;
+            case C.WM_WTSSESSION_CHANGE when (int)wParam == C.WTS_SESSION_LOCK:
+                _wm.OnSessionLock(true);
                 return true;
             case C.WM_QUERYENDSESSION:
                 // Make every hidden window visible so that apps can show "save changes?" prompts.

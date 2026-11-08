@@ -36,7 +36,39 @@ internal static unsafe class InputHooks
 
     public static volatile bool KeyboardEnabled = true;
 
-    public static Action<string>? OnCommand { get; set; }
+    // Physical key state as seen by the hook. GetAsyncKeyState can't be used for keys we swallow
+    // (a swallowed event never updates it), e.g. to find out whether a hotkey is still held.
+    private static readonly bool[] s_physDown = new bool[256];
+
+    // "$mod is held" notifications (for the group-lines animation).
+    private static volatile int s_watchModifier; // Modifiers, 0 = off
+    private static bool s_watchHeld;
+
+    /// <summary>Runs a bound command: (command, virtual key that triggered it, modifiers held).</summary>
+    public static Action<string, int, Modifiers>? OnCommand { get; set; }
+
+    /// <summary>Called on the main thread when the watched modifier ($mod) is pressed or released.</summary>
+    public static Action<bool>? OnModifierHeld { get; set; }
+
+    public static bool IsPhysicallyDown(int vk) => vk is > 0 and < 256 && s_physDown[vk];
+
+    /// <summary>Modifiers held right now, from the hook's own key state.</summary>
+    public static Modifiers PhysicalModifiers()
+    {
+        // Keyboards report left/right codes; injected input may use the generic ones (VK_SHIFT/CONTROL/MENU).
+        var m = Modifiers.None;
+        if (s_physDown[0xA0] || s_physDown[0xA1] || s_physDown[C.VK_SHIFT]) m |= Modifiers.Shift;
+        if (s_physDown[0xA2] || s_physDown[0xA3] || s_physDown[C.VK_CONTROL]) m |= Modifiers.Ctrl;
+        if (s_physDown[0xA4] || s_physDown[0xA5] || s_physDown[C.VK_MENU]) m |= Modifiers.Alt;
+        if (s_physDown[0x5B] || s_physDown[0x5C]) m |= Modifiers.Win;
+        return m;
+    }
+
+    public static void WatchModifier(Modifiers mods)
+    {
+        s_watchModifier = (int)mods;
+        s_watchHeld = false;
+    }
     public static Action<IntPtr, DragButton, int, int>? OnDragStart { get; set; }
     public static Action<int, int>? OnDragMove { get; set; }
     public static Action<int, int, bool>? OnDragEnd { get; set; }
@@ -116,6 +148,8 @@ internal static unsafe class InputHooks
     {
         try
         {
+            if (code == C.HC_ACTION && ((KBDLLHOOKSTRUCT*)lParam)->dwExtraInfo != WindowOps.InjectedMarker)
+                TrackPhysical((uint)wParam, (int)((KBDLLHOOKSTRUCT*)lParam)->vkCode);
             if (code == C.HC_ACTION && KeyboardEnabled)
             {
                 var k = (KBDLLHOOKSTRUCT*)lParam;
@@ -131,7 +165,7 @@ internal static unsafe class InputHooks
                         if (s_bindings.TryGetValue(s_mode, out var map) && map.TryGetValue(new KeyCombo(mods, vk), out var b))
                         {
                             if (b.OnRelease) s_pendingRelease[vk] = b;
-                            else Fire(b.Command);
+                            else Fire(b.Command, vk, mods);
                             s_swallowed.Add(vk);
                             if ((mods & (Modifiers.Alt | Modifiers.Win)) != 0) WindowOps.SendMaskKey();
                             return 1;
@@ -139,7 +173,7 @@ internal static unsafe class InputHooks
                     }
                     else if (up && s_swallowed.Remove(vk))
                     {
-                        if (s_pendingRelease.Remove(vk, out var b)) Fire(b.Command);
+                        if (s_pendingRelease.Remove(vk, out var b)) Fire(b.Command, vk, b.Combo.Modifiers);
                         return 1;
                     }
                 }
@@ -152,10 +186,29 @@ internal static unsafe class InputHooks
         return User32.CallNextHookEx(0, code, wParam, lParam);
     }
 
-    private static void Fire(string command)
+    private static void TrackPhysical(uint msg, int vk)
+    {
+        if (vk is <= 0 or >= 256) return;
+        bool down = msg is C.WM_KEYDOWN or C.WM_SYSKEYDOWN;
+        if (!down && msg is not (C.WM_KEYUP or C.WM_SYSKEYUP)) return;
+        s_physDown[vk] = down;
+
+        int watch = s_watchModifier;
+        if (watch == 0 || !KeyNames.IsModifierVk(vk)) return;
+        var mods = PhysicalModifiers();
+        // AltGr (Ctrl+Alt, used to type Polish and other letters) doesn't count as holding Alt.
+        var w = (Modifiers)watch;
+        bool held = (mods & w) == w && (w.HasFlag(Modifiers.Ctrl) || !mods.HasFlag(Modifiers.Ctrl));
+        if (held == s_watchHeld) return;
+        s_watchHeld = held;
+        var handler = OnModifierHeld;
+        if (handler != null) Dispatcher.Post(() => handler(held));
+    }
+
+    private static void Fire(string command, int vk, Modifiers mods)
     {
         var handler = OnCommand;
-        if (handler != null) Dispatcher.Post(() => handler(command));
+        if (handler != null) Dispatcher.Post(() => handler(command, vk, mods));
     }
 
     [UnmanagedCallersOnly]

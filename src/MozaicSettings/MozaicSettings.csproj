@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Mozaic.Core\Mozaic.Core.csproj" />
     <Compile Include="..\Shared\IpcProtocol.cs" Link="Shared\IpcProtocol.cs" />
     <Compile Include="..\Shared\Localization.cs" Link="Shared\Localization.cs" />
+    <Compile Include="..\Shared\KeyboardModel.cs" Link="Shared\KeyboardModel.cs" />
     <Resource Include="..\Mozaic\mozaic.ico" Link="mozaic.ico" />
   </ItemGroup>
 

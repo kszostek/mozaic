@@ -102,6 +102,7 @@ internal sealed partial class WindowManager
         SyncFocus();
         RaiseFloating();
         UpdateFocusFrame();
+        UpdateEffects();
         PersistHidden();
         _state.ScheduleSave(this);
     }

@@ -28,6 +28,7 @@ public static class ConfigParser
         ParseInto(state, text, path ?? "<config>", 0);
         if (state.Stack.Count > 1)
             cfg.Errors.Add(new ConfigError(path ?? "<config>", 0, "missing closing '}'"));
+        AddImplicitBindings(state);
         return cfg;
     }
 
@@ -327,6 +328,28 @@ public static class ConfigParser
             case "autotiling": cfg.Autotiling = ParseBool(rest); break;
             case "osd": cfg.Osd = ParseBool(rest); break;
             case "welcome": cfg.Welcome = ParseBool(rest); break;
+            case "group_lines":
+                cfg.GroupLines = rest.Trim().ToLowerInvariant() switch
+                {
+                    "always" => "always",
+                    "on" or "yes" or "true" or "1" or "enable" => "on",
+                    "off" or "no" or "false" or "0" or "disable" => "off",
+                    _ => throw new FormatException("group_lines must be on, always or off"),
+                };
+                break;
+            case "group_lines_color":
+                cfg.GroupLinesColor = ParseColor(rest.Trim());
+                break;
+            case "inactive_opacity":
+                ParseInactiveOpacity(cfg, rest);
+                break;
+            case "opacity_ignore":
+            {
+                var (crit, _) = SplitCriteria(rest);
+                if (crit == null) throw new FormatException("expected: opacity_ignore [criteria]");
+                cfg.OpacityIgnore.Add(crit);
+                break;
+            }
 
             default:
                 if (IgnoredDirectives.Contains(directive) || directive.StartsWith("client.", StringComparison.Ordinal))
@@ -336,6 +359,43 @@ public static class ConfigParser
                 }
                 if (line.EndsWith('{')) st.Stack.Push((Block.Skip, ""));
                 throw new FormatException($"unknown directive '{word}'");
+        }
+    }
+
+    /// <summary>inactive_opacity off | &lt;last used %&gt; [&lt;minimum %&gt;]</summary>
+    private static void ParseInactiveOpacity(MozaicConfig cfg, string rest)
+    {
+        var parts = rest.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.TrimEnd('%')).ToArray();
+        if (parts.Length == 1 && parts[0].ToLowerInvariant() is "off" or "no" or "false" or "disable" or "100")
+        {
+            cfg.InactiveOpacity = null;
+            return;
+        }
+        if (parts.Length is < 1 or > 2 ||
+            !int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int first) ||
+            (parts.Length == 2 && !int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out _)))
+            throw new FormatException("expected: inactive_opacity off | <percent> [<minimum percent>]");
+        int min = parts.Length == 2 ? int.Parse(parts[1], CultureInfo.InvariantCulture) : first;
+        if (first is < 10 or > 100 || min is < 10 or > 100) throw new FormatException("inactive_opacity: percentages must be between 10 and 100");
+        cfg.InactiveOpacity = first;
+        cfg.InactiveOpacityMin = Math.Min(min, first);
+    }
+
+    /// <summary>
+    /// The shortcut cheat sheet is bound to $mod+` and $mod+Shift+` unless the config binds those keys or uses
+    /// the cheatsheet command itself, so that configs written before the feature existed get it too.
+    /// </summary>
+    private static void AddImplicitBindings(State st)
+    {
+        var cfg = st.Cfg;
+        if (cfg.Bindings.Any(b => b.Command.TrimStart().StartsWith("cheatsheet", StringComparison.OrdinalIgnoreCase))) return;
+        var mod = cfg.Variables.TryGetValue("$mod", out var m) ? m : "Alt";
+        foreach (var text in new[] { mod + "+grave", mod + "+Shift+grave" })
+        {
+            if (!KeyNames.TryParseCombo(text, st.CharToVk, false, out var combo, out _)) continue;
+            if (cfg.Bindings.Any(b => b.Mode == "default" && b.Combo == combo)) continue;
+            cfg.Bindings.Add(new Binding("default", combo, "cheatsheet", false, Implicit: true));
         }
     }
 

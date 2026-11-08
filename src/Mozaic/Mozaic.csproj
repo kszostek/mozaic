@@ -29,6 +29,7 @@
   <ItemGroup>
     <Compile Include="..\Shared\IpcProtocol.cs" Link="Ipc\IpcProtocol.cs" />
     <Compile Include="..\Shared\Localization.cs" Link="Localization.cs" />
+    <Compile Include="..\Shared\KeyboardModel.cs" Link="UI\KeyboardModel.cs" />
   </ItemGroup>
 
 </Project>

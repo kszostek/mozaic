@@ -80,7 +80,7 @@ public class ConfigTests
         Assert.Equal(2, cfg.Errors.Count);
         Assert.Equal(1, cfg.Errors[0].Line);
         Assert.Equal(2, cfg.Errors[1].Line);
-        Assert.Single(cfg.Bindings);
+        Assert.Single(cfg.Bindings, b => !b.Implicit); // + the implicit cheat sheet keys
     }
 
     [Fact]

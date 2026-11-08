@@ -123,7 +123,7 @@ internal sealed class Launcher : Win32Window
 
     private static readonly string[] ExtraCommands =
     {
-        "settings", "reload", "restart", "balance", "retile", "pause", "focus last", "layout toggle all", "layout splith",
+        "settings", "cheatsheet", "reload", "restart", "balance", "retile", "pause", "focus last", "layout toggle all", "layout splith",
         "layout splitv", "layout stacking", "layout tabbed", "floating toggle", "sticky toggle", "fullscreen toggle",
         "move position center", "move workspace to output next", "focus output next", "workspace back_and_forth",
         "gaps inner current plus 4", "gaps inner current minus 4", "gaps inner current set 0", "gaps outer current toggle 12",

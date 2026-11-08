@@ -268,6 +268,33 @@ public sealed class SettingsModel : Observable
 
     public string CornerStyle { get => Get("corner_style") ?? "default"; set => SetRaw("corner_style", value); }
 
+    public static List<Option> GroupLineOptions { get; } = new()
+    {
+        new("on", L.T("Flowing after changes and while $mod is held")),
+        new("always", L.T("Always flowing")),
+        new("off", L.T("Off")),
+    };
+
+    public string GroupLines { get => Parsed.GroupLines; set => SetRaw("group_lines", value); }
+
+    public uint GroupLinesColor { get => Parsed.GroupLinesColor ?? Parsed.Focused.Indicator; set => SetRaw("group_lines_color", Hex(value)); }
+
+    public bool InactiveOpacityOn { get => Parsed.InactiveOpacity != null; set => SetOpacity(value ? Parsed.InactiveOpacity ?? 90 : null, Parsed.InactiveOpacityMin); }
+
+    /// <summary>Opacity of the previously used window, in percent.</summary>
+    public int OpacityLastUsed { get => Parsed.InactiveOpacity ?? 90; set => SetOpacity(Math.Clamp(value, 30, 100), Math.Min(OpacityMin, value)); }
+
+    /// <summary>Opacity that windows used long ago fade down to, in percent.</summary>
+    public int OpacityMin { get => Parsed.InactiveOpacityMin; set => SetOpacity(Math.Max(OpacityLastUsed, value), Math.Clamp(value, 30, 100)); }
+
+    private void SetOpacity(int? first, int min)
+    {
+        SetRaw("inactive_opacity", first is int f ? f.ToString(CultureInfo.InvariantCulture) + " " + Math.Min(min, f).ToString(CultureInfo.InvariantCulture) : "off",
+            prop: nameof(InactiveOpacityOn));
+        OnPropertyChanged(nameof(OpacityLastUsed));
+        OnPropertyChanged(nameof(OpacityMin));
+    }
+
     public List<ClientColorModel> ClientColors { get; private set; } = new();
 
     // =====================================================================================

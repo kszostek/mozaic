@@ -221,6 +221,8 @@ internal sealed class CommandExecutor(WindowManager wm)
             case "settings":
                 wm.OpenSettings();
                 return null;
+            case "cheatsheet":
+                return wm.Cheatsheet(Arg(1));
             case "hotkeys":
             {
                 // Used by the settings app while it records a shortcut; re-enabled automatically after 2 minutes.

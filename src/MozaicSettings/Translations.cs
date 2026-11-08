@@ -74,66 +74,12 @@ internal static partial class L
         A("Documentation on GitHub", "Dokumentacja na GitHubie");
         A("i3 User Guide", "Podręcznik i3");
         A("Resize mode", "Tryb zmiany rozmiaru");
-
-        // ---- Keyboard picture: categories and labels
-        A("Focus", "Fokus");
-        A("Move window", "Przesuwanie okna");
-        A("Move to workspace", "Na obszar roboczy");
-        A("Layout & size", "Układ i rozmiar");
-        A("Window", "Okno");
-        A("Launch", "Uruchamianie");
-        A("Modes", "Tryby");
-        A("Other", "Inne");
-        A("focus", "fokus");
-        A("parent", "rodzic");
-        A("child", "dziecko");
-        A("tiled ↔ floating", "kafel ↔ pływające");
-        A("last window", "ostatnie okno");
-        A("monitor", "monitor");
-        A("move", "przesuń");
-        A("ws to", "obszar na");
-        A("ws", "obszar");
-        A("scratchpad", "schowek");
-        A("center", "wyśrodkuj");
-        A("next ws", "nast. obszar");
-        A("prev ws", "poprz. obszar");
-        A("ws ⇄", "obszar ⇄");
-        A("split ⇆", "podział ⇆");
-        A("split ⇅", "podział ⇅");
-        A("split", "podział");
-        A("stacked", "stos");
-        A("tabbed", "karty");
-        A("next layout", "nast. układ");
-        A("toggle split", "zmień podział");
-        A("layout", "układ");
-        A("balance", "wyrównaj");
-        A("fullscreen", "pełny ekran");
-        A("floating", "pływające");
-        A("sticky", "przypięte");
-        A("close", "zamknij");
-        A("wider", "szersze");
-        A("narrower", "węższe");
-        A("taller", "wyższe");
-        A("shorter", "niższe");
-        A("resize", "rozmiar");
-        A("gaps +", "odstępy +");
-        A("gaps −", "odstępy −");
-        A("gaps", "odstępy");
-        A("terminal", "terminal");
-        A("files", "pliki");
-        A("run", "uruchom");
-        A("windows", "okna");
-        A("shortcuts", "skróty");
-        A("launcher", "programy");
-        A("exit mode", "wyjdź z trybu");
-        A("mode", "tryb");
-        A("reload", "przeładuj");
-        A("restart", "restart");
-        A("exit", "zakończ");
-        A("confirm", "potwierdź");
-        A("settings", "ustawienia");
-        A("pause", "wstrzymaj");
-        A("Space", "Spacja");
+        A("Cheat sheet", "Ściągawka");
+        A("Hold {cheatsheet} anywhere to see this keyboard on top of your windows; press Shift as well for the $mod + Shift keys. It disappears as soon as you let go.",
+            "Przytrzymaj {cheatsheet} w dowolnym miejscu, a ta klawiatura pojawi się nad oknami; wciśnij też Shift, aby zobaczyć skróty $mod + Shift. Znika, gdy tylko puścisz klawisze.");
+        A("Groups and focus", "Grupy i fokus");
+        A("Lines in the gaps join the windows of one tile (the part of the screen you split with {split v} or {split h}), and a current runs along them when the focus moves or while $mod is held. Windows you haven't used for a while fade a little, so the active one stands out.",
+            "Linie w odstępach łączą okna jednego kafelka (części ekranu podzielonej przez {split v} lub {split h}), a gdy przenosisz fokus albo trzymasz $mod, płynie po nich prąd. Okna nieużywane od dłuższego czasu lekko przygasają, więc aktywne się wyróżnia.");
 
         // ---- General
         A("How Mozaic behaves. Changes are applied when you save.", "Jak zachowuje się Mozaic. Zmiany zostaną zastosowane po zapisaniu.");
@@ -201,6 +147,21 @@ internal static partial class L
         A("Thick focus frame", "Gruba ramka aktywnego okna");
         A("Extra frame around the focused window, like i3 (0 = off).", "Dodatkowa ramka wokół aktywnego okna, jak w i3 (0 = wyłączona).");
         A("Window corners", "Narożniki okien");
+        A("Effects", "Efekty");
+        A("Group lines", "Linie grup");
+        A("Lines in the gaps between windows of the same tile show which windows belong together. A current flows along them when the focus or layout changes.",
+            "Linie w odstępach między oknami tego samego kafelka pokazują, które okna są razem. Gdy zmienia się fokus lub układ, płynie po nich prąd.");
+        A("Color of the current", "Kolor prądu");
+        A("Color of the group lines and the current flowing along them.", "Kolor linii grup i płynącego po nich prądu.");
+        A("Flowing after changes and while $mod is held", "Prąd po zmianach i gdy trzymasz $mod");
+        A("Always flowing", "Prąd przez cały czas");
+        A("Fade windows you are not using", "Przygaszaj nieużywane okna");
+        A("The active window is opaque; the longer ago a window was used, the more transparent it gets.",
+            "Aktywne okno jest w pełni widoczne; im dawniej używane okno, tym bardziej przezroczyste.");
+        A("Previously used window", "Poprzednio używane okno");
+        A("Opacity of the window you used before the active one.", "Krycie okna używanego tuż przed aktywnym.");
+        A("Windows used long ago", "Okna używane dawno");
+        A("Older windows fade down to this opacity.", "Starsze okna stopniowo przygasają do tego krycia.");
         A("Windows default", "Domyślne Windows");
         A("Rounded", "Zaokrąglone");
         A("Slightly rounded", "Lekko zaokrąglone");

@@ -52,6 +52,11 @@ internal sealed class ManagedWindow
     public uint? AppliedBorderColor { get; set; }
     public bool CornerApplied { get; set; }
 
+    /// <summary>When the window last got the focus (higher = more recent); orders windows for inactive_opacity.</summary>
+    public long FocusSeq { get; set; }
+    /// <summary>The opacity last requested from the <see cref="OpacityWorker"/> (255 = opaque).</summary>
+    public byte RequestedAlpha { get; set; } = 255;
+
     public WindowFacts Facts(bool focused) => new(
         Node.Id, Hwnd, ClassName, Node.Title, ProcessName, Node.InFloating, IsDialog, Node.Urgent, focused,
         Tree.WorkspaceOf(Node)?.Name, Node.Marks);
