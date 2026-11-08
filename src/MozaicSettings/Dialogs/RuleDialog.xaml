@@ -1,0 +1,64 @@
+<Window x:Class="Mozaic.Settings.Dialogs.RuleDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:Mozaic.Settings"
+        Title="{l:T Window rule}" Width="760" SizeToContent="Height" WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <StackPanel Margin="26,20,26,22">
+        <DockPanel Margin="0,0,0,6">
+            <Button DockPanel.Dock="Right" Click="Refresh_Click" Padding="10,4">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE72C;" Style="{StaticResource Icon}" FontSize="12" />
+                    <TextBlock Text="{l:T Refresh}" Margin="6,0,0,0" />
+                </StackPanel>
+            </Button>
+            <TextBlock Text="{l:T Pick a window (optional)}" Style="{StaticResource SectionTitle}" Margin="0" VerticalAlignment="Center" />
+        </DockPanel>
+        <ListBox x:Name="WindowPicker" Height="150" DisplayMemberPath="Display" SelectionChanged="WindowPicker_SelectionChanged" />
+
+        <TextBlock Text="{l:T Which windows}" Style="{StaticResource SectionTitle}" Margin="0,18,0,6" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <CheckBox x:Name="UseProcess" Content="{l:T Program}" VerticalAlignment="Center" Checked="Changed" Unchecked="Changed" />
+            <TextBox x:Name="ProcessBox" Grid.Column="1" Margin="0,3" FontFamily="{StaticResource MonoFont}" TextChanged="Changed" />
+            <CheckBox x:Name="UseClass" Grid.Row="1" Content="{l:T Window class}" VerticalAlignment="Center" Checked="Changed" Unchecked="Changed" />
+            <TextBox x:Name="ClassBox" Grid.Row="1" Grid.Column="1" Margin="0,3" FontFamily="{StaticResource MonoFont}" TextChanged="Changed" />
+            <CheckBox x:Name="UseTitle" Grid.Row="2" Content="{l:T Title contains}" VerticalAlignment="Center" Checked="Changed" Unchecked="Changed" />
+            <TextBox x:Name="TitleBox" Grid.Row="2" Grid.Column="1" Margin="0,3" FontFamily="{StaticResource MonoFont}" TextChanged="Changed" />
+        </Grid>
+
+        <TextBlock Text="{l:T What to do}" Style="{StaticResource SectionTitle}" Margin="0,18,0,6" />
+        <StackPanel>
+            <RadioButton x:Name="ActFloat" Content="{l:T Float (do not tile)}" GroupName="act" Checked="Changed" IsChecked="True" Margin="0,2" />
+            <RadioButton x:Name="ActSticky" Content="{l:T Float and show on every workspace}" GroupName="act" Checked="Changed" Margin="0,2" />
+            <StackPanel Orientation="Horizontal" Margin="0,2">
+                <RadioButton x:Name="ActAssign" Content="{l:T Always open on workspace}" GroupName="act" Checked="Changed" VerticalAlignment="Center" />
+                <TextBox x:Name="WorkspaceBox" Width="90" Margin="10,0,0,0" Text="2" TextChanged="Changed" />
+            </StackPanel>
+            <RadioButton x:Name="ActNoFocus" Content="{l:T Do not focus it when it opens}" GroupName="act" Checked="Changed" Margin="0,2" />
+            <RadioButton x:Name="ActIgnore" Content="{l:T Do not manage it at all}" GroupName="act" Checked="Changed" Margin="0,2" />
+            <StackPanel Orientation="Horizontal" Margin="0,2">
+                <RadioButton x:Name="ActCustom" Content="{l:T Run commands}" GroupName="act" Checked="Changed" VerticalAlignment="Center" />
+                <TextBox x:Name="CustomBox" Width="420" Margin="10,0,0,0" FontFamily="{StaticResource MonoFont}" Text="floating enable, move position center" TextChanged="Changed" />
+            </StackPanel>
+        </StackPanel>
+
+        <Border Style="{StaticResource Card}" Margin="0,18,0,0" Padding="12,8">
+            <TextBlock x:Name="Preview" FontFamily="{StaticResource MonoFont}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+        </Border>
+        <TextBlock x:Name="ErrorText" Foreground="{DynamicResource SystemFillColorCriticalBrush}" Margin="2,10,0,0" TextWrapping="Wrap" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="{l:T Cancel}" IsCancel="True" Padding="18,6" Margin="0,0,8,0" />
+            <Button Content="{l:T OK}" Click="Ok_Click" Style="{DynamicResource AccentButtonStyle}" Padding="26,6" />
+        </StackPanel>
+    </StackPanel>
+</Window>

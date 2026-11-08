@@ -1,0 +1,62 @@
+<UserControl x:Class="Mozaic.Settings.Pages.KeysPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:Mozaic.Settings">
+    <DockPanel Margin="36,28,36,12">
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="{l:T Keyboard shortcuts}" Style="{StaticResource PageTitle}" />
+            <TextBlock Style="{StaticResource PageSubtitle}"
+                       Text="{l:T 'Each shortcut runs an i3 command. Double-click a shortcut to change it. A red mark means the same keys are used twice.'}" />
+            <DockPanel Margin="0,2,0,12">
+                <Button DockPanel.Dock="Right" Click="Add_Click" Style="{DynamicResource AccentButtonStyle}" Padding="14,6">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE710;" Style="{StaticResource Icon}" FontSize="13" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        <TextBlock Text="{l:T Add shortcut}" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
+                <TextBlock Text="{l:T Mode}" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <ComboBox ItemsSource="{Binding Modes}" SelectedItem="{Binding SelectedMode}" MinWidth="140" Margin="0,0,18,0" />
+                <TextBlock Text="&#xE721;" Style="{StaticResource Icon}" Margin="0,0,8,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBox Text="{Binding KeyFilter, UpdateSourceTrigger=PropertyChanged}" Width="280" HorizontalAlignment="Left"
+                         ToolTip="{l:T Search by key or command}" />
+            </DockPanel>
+        </StackPanel>
+        <ListBox x:Name="List" ItemsSource="{Binding Bindings}" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch"
+                 MouseDoubleClick="List_DoubleClick" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.ScrollUnit="Pixel">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="250" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Background="{Binding Category, Converter={StaticResource CategoryBrush}}" CornerRadius="2" Margin="0,3" />
+                        <Border x:Name="pill" Grid.Column="1" Style="{StaticResource KeyPill}" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding PrettyKeys}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        </Border>
+                        <TextBlock Grid.Column="2" Text="{Binding Command}" FontFamily="{StaticResource MonoFont}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" Margin="12,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="3" Orientation="Horizontal">
+                            <TextBlock x:Name="warn" Text="&#xE7BA;" Style="{StaticResource Icon}" Margin="0,0,10,0" Visibility="Collapsed"
+                                       Foreground="{DynamicResource SystemFillColorCriticalBrush}" ToolTip="{l:T These keys are used by another shortcut too}" />
+                            <Button Click="Edit_Click" Tag="{Binding}" Padding="8,4" Margin="0,0,4,0" ToolTip="{l:T Edit}">
+                                <TextBlock Text="&#xE70F;" Style="{StaticResource Icon}" FontSize="13" />
+                            </Button>
+                            <Button Click="Delete_Click" Tag="{Binding}" Padding="8,4" ToolTip="{l:T Delete}">
+                                <TextBlock Text="&#xE74D;" Style="{StaticResource Icon}" FontSize="13" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Conflict}" Value="True">
+                            <Setter TargetName="warn" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="pill" Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</UserControl>

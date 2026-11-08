@@ -1,0 +1,117 @@
+<UserControl x:Class="Mozaic.Settings.Pages.BarPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:Mozaic.Settings">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="36,28,36,36" MaxWidth="1040">
+            <TextBlock Text="{l:T Bar}" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="{l:T 'The i3bar-style bar with workspaces, the focused window and status information.'}" Style="{StaticResource PageSubtitle}" />
+
+            <l:SettingRow Icon="&#xE7F4;" Title="{l:T Show the bar}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding BarVisible}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE8B5;" Title="{l:T Position}">
+                <ComboBox ItemsSource="{Binding Source={x:Static l:SettingsModel.PositionOptions}}" SelectedValuePath="Value" DisplayMemberPath="Label"
+                          SelectedValue="{Binding BarPosition}" MinWidth="160" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE7C3;" Title="{l:T Height}" Description="{l:T '0 = automatic, from the font size.'}">
+                <StackPanel Orientation="Horizontal">
+                    <Slider Minimum="0" Maximum="60" Width="220" Value="{Binding BarHeight}" IsSnapToTickEnabled="True" TickFrequency="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding BarHeight}" Width="34" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Contents}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE7C4;" Title="{l:T Workspace buttons}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding WorkspaceButtons}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE71D;" Title="{l:T Application icons on workspace buttons}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding WorkspaceIcons}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE8C8;" Title="{l:T Hide workspace numbers}" Description="{l:T 'Show only the name of workspaces such as 2:web.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding StripWorkspaceNumbers}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE8A5;" Title="{l:T Title of the focused window}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding ShowTitle}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE765;" Title="{l:T Binding mode indicator}" Description="{l:T 'Shows resize when the resize mode is active.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding BindingModeIndicator}" />
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Status}" Style="{StaticResource SectionTitle}" />
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <WrapPanel>
+                        <CheckBox Content="{l:T Processor}" IsChecked="{Binding StatusCpu}" Margin="0,0,22,6" />
+                        <CheckBox Content="{l:T Memory}" IsChecked="{Binding StatusMemory}" Margin="0,0,22,6" />
+                        <CheckBox Content="{l:T Battery}" IsChecked="{Binding StatusBattery}" Margin="0,0,22,6" />
+                        <CheckBox Content="{l:T Disk space}" IsChecked="{Binding StatusDisk}" Margin="0,0,22,6" />
+                        <CheckBox Content="{l:T Date and time}" IsChecked="{Binding StatusDateTime}" Margin="0,0,22,6" />
+                    </WrapPanel>
+                    <TextBlock Text="{l:T 'Date and time format (.NET format, e.g. ddd d MMM HH:mm)'}" Style="{StaticResource Secondary}" Margin="0,10,0,4" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Text="{Binding DateTimeFormat, UpdateSourceTrigger=PropertyChanged, Delay=400}" Width="260" FontFamily="{StaticResource MonoFont}" />
+                        <TextBlock Text="{Binding DateTimePreview}" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    </StackPanel>
+                    <TextBlock Text="{l:T 'Status program (optional, i3bar protocol or plain text lines; replaces the blocks above)'}" Style="{StaticResource Secondary}" Margin="0,12,0,4" />
+                    <TextBox Text="{Binding StatusCommand, UpdateSourceTrigger=LostFocus}" FontFamily="{StaticResource MonoFont}" />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="{l:T Colors}" Style="{StaticResource SectionTitle}" />
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <WrapPanel Margin="0,0,0,10">
+                        <StackPanel Margin="0,0,24,6">
+                            <TextBlock Text="{l:T Background}" Style="{StaticResource Secondary}" Margin="0,0,0,4" />
+                            <l:ColorBox Color="{Binding BarBackground}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,24,6">
+                            <TextBlock Text="{l:T Text}" Style="{StaticResource Secondary}" Margin="0,0,0,4" />
+                            <l:ColorBox Color="{Binding BarStatusline}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,24,6">
+                            <TextBlock Text="{l:T Separator}" Style="{StaticResource Secondary}" Margin="0,0,0,4" />
+                            <l:ColorBox Color="{Binding BarSeparator}" />
+                        </StackPanel>
+                    </WrapPanel>
+                    <Grid Margin="0,4,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="230" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" Text="{l:T Border}" Style="{StaticResource Secondary}" />
+                        <TextBlock Grid.Column="2" Text="{l:T Background}" Style="{StaticResource Secondary}" />
+                        <TextBlock Grid.Column="3" Text="{l:T Text}" Style="{StaticResource Secondary}" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding WorkspaceColors}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <l:ColorBox Grid.Column="1" Color="{Binding Border}" HorizontalAlignment="Left" />
+                                    <l:ColorBox Grid.Column="2" Color="{Binding Background}" HorizontalAlignment="Left" />
+                                    <l:ColorBox Grid.Column="3" Color="{Binding Text}" HorizontalAlignment="Left" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="{l:T Windows taskbar}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE75B;" Title="{l:T Automatically hide the Windows taskbar}"
+                          Description="{l:T 'A Windows setting, applied immediately. Gives the tiled windows the whole screen.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding TaskbarAutoHide}" />
+            </l:SettingRow>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

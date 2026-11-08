@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Mozaic</AssemblyName>
+    <RootNamespace>Mozaic</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>mozaic.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Product>Mozaic</Product>
+    <Description>i3-style tiling window manager for Windows 11</Description>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- Native, self-contained single exe: dotnet publish -c Release -r win-x64 -->
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
+    <OptimizationPreference>Speed</OptimizationPreference>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <StackTraceSupport>true</StackTraceSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mozaic.Core\Mozaic.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\IpcProtocol.cs" Link="Ipc\IpcProtocol.cs" />
+    <Compile Include="..\Shared\Localization.cs" Link="Localization.cs" />
+  </ItemGroup>
+
+</Project>

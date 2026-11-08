@@ -1,0 +1,97 @@
+<UserControl x:Class="Mozaic.Settings.Pages.AppearancePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:Mozaic.Settings">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="36,28,36,36" MaxWidth="1040">
+            <TextBlock Text="{l:T Appearance}" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="{l:T 'Gaps, borders, colors and font. The preview updates as you change things.'}" Style="{StaticResource PageSubtitle}" />
+
+            <Border Style="{StaticResource Card}" Padding="16">
+                <l:LayoutPreview />
+            </Border>
+
+            <TextBlock Text="{l:T Gaps}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE8A9;" Title="{l:T Between windows}" Description="{l:T 'Space between neighbouring windows, in pixels at 100% scaling.'}">
+                <StackPanel Orientation="Horizontal">
+                    <Slider Minimum="0" Maximum="40" Width="220" Value="{Binding GapsInner}" IsSnapToTickEnabled="True" TickFrequency="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding GapsInner}" Width="34" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE740;" Title="{l:T At the screen edges}" Description="{l:T 'Added to the gap between windows.'}">
+                <StackPanel Orientation="Horizontal">
+                    <Slider Minimum="0" Maximum="40" Width="220" Value="{Binding GapsOuter}" IsSnapToTickEnabled="True" TickFrequency="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding GapsOuter}" Width="34" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE73F;" Title="{l:T Smart gaps}" Description="{l:T 'No gaps when a workspace has only one window.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding SmartGaps}" />
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Borders}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE790;" Title="{l:T Colored window borders}"
+                          Description="{l:T 'Windows 11 draws the border of each window in the colors below (focused / unfocused).'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding WindowBorderColors}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE81E;" Title="{l:T Thick focus frame}" Description="{l:T 'Extra frame around the focused window, like i3 (0 = off).'}">
+                <StackPanel Orientation="Horizontal">
+                    <Slider Minimum="0" Maximum="8" Width="220" Value="{Binding BorderWidth}" IsSnapToTickEnabled="True" TickFrequency="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding BorderWidth}" Width="34" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE71A;" Title="{l:T Window corners}">
+                <ComboBox ItemsSource="{Binding Source={x:Static l:SettingsModel.CornerOptions}}" SelectedValuePath="Value" DisplayMemberPath="Label"
+                          SelectedValue="{Binding CornerStyle}" MinWidth="220" />
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Font}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE8D2;" Title="{l:T 'Font of the bar, tabs and launcher'}">
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox ItemsSource="{Binding Source={x:Static l:SettingsModel.FontFamilies}}" Width="230"
+                              IsEditable="True" Text="{Binding FontFamily, UpdateSourceTrigger=LostFocus}" />
+                    <Slider Minimum="7" Maximum="16" Width="120" Margin="14,0,0,0" Value="{Binding FontSize}" IsSnapToTickEnabled="True" TickFrequency="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding FontSize}" Width="30" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Window colors}" Style="{StaticResource SectionTitle}" />
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="230" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" Text="{l:T Window border}" Style="{StaticResource Secondary}" />
+                        <TextBlock Grid.Column="2" Text="{l:T Tab background}" Style="{StaticResource Secondary}" />
+                        <TextBlock Grid.Column="3" Text="{l:T Tab border}" Style="{StaticResource Secondary}" />
+                        <TextBlock Grid.Column="4" Text="{l:T Tab text}" Style="{StaticResource Secondary}" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding ClientColors}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <l:ColorBox Grid.Column="1" Color="{Binding ChildBorder}" HorizontalAlignment="Left" />
+                                    <l:ColorBox Grid.Column="2" Color="{Binding Background}" HorizontalAlignment="Left" />
+                                    <l:ColorBox Grid.Column="3" Color="{Binding Border}" HorizontalAlignment="Left" />
+                                    <l:ColorBox Grid.Column="4" Color="{Binding Text}" HorizontalAlignment="Left" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

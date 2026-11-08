@@ -1,0 +1,68 @@
+<Window x:Class="Mozaic.Settings.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:Mozaic.Settings"
+        Title="{l:T Mozaic Settings}" Width="1240" Height="860" MinWidth="940" MinHeight="600"
+        WindowStartupLocation="CenterScreen" Icon="mozaic.ico">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Navigation -->
+        <DockPanel Margin="10,6,6,10">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="14,10,10,22">
+                <Image Source="mozaic.ico" Width="30" Height="30" />
+                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="Mozaic" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Text="{l:T Tiling window manager}" Style="{StaticResource Secondary}" />
+                </StackPanel>
+            </StackPanel>
+            <Border DockPanel.Dock="Bottom" Style="{StaticResource Card}" Margin="4,8,4,0" Padding="12,10">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="StatusDot" Width="9" Height="9" Fill="Gray" VerticalAlignment="Center" />
+                        <TextBlock x:Name="StatusText" Text="…" Margin="8,0,0,0" FontSize="12" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button x:Name="StartButton" Content="{l:T Start Mozaic}" Margin="0,8,0,0" HorizontalAlignment="Stretch"
+                            Click="StartMozaic_Click" Visibility="Collapsed" />
+                </StackPanel>
+            </Border>
+            <ListBox x:Name="Nav" BorderThickness="0" Background="Transparent" SelectionChanged="Nav_SelectionChanged"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+        </DockPanel>
+
+        <!-- Page + save bar -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <ContentControl x:Name="PageHost" Focusable="False" />
+            <Border Grid.Row="1" Padding="24,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Content="{l:T Discard changes}" Click="Revert_Click" Margin="0,0,8,0" Padding="14,6"
+                                IsEnabled="{Binding Dirty}" />
+                        <Button Click="Save_Click" Padding="18,6" Style="{DynamicResource AccentButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE74E;" Style="{StaticResource Icon}" FontSize="14" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                <TextBlock Text="{l:T Save and apply}" Margin="8,0,0,0" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock x:Name="ErrorLink" Cursor="Hand" MouseLeftButtonUp="ErrorLink_Click" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}" Margin="0,0,16,0">
+                            <Run Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" />
+                            <Run Text="{Binding ErrorSummary, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock x:Name="SaveStatus" VerticalAlignment="Center" Style="{StaticResource Secondary}" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

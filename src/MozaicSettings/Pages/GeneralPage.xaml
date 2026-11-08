@@ -1,0 +1,84 @@
+<UserControl x:Class="Mozaic.Settings.Pages.GeneralPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:Mozaic.Settings">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="36,28,36,36" MaxWidth="1040">
+            <TextBlock Text="{l:T General}" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="{l:T 'How Mozaic behaves. Changes are applied when you save.'}" Style="{StaticResource PageSubtitle}" />
+
+            <TextBlock Text="{l:T Keyboard}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE765;" Title="{l:T 'Modifier key ($mod)'}"
+                          Description="{l:T 'All shortcuts start with this key. Alt avoids conflicts with Windows (Win+L cannot be changed).'}">
+                <ComboBox ItemsSource="{Binding Source={x:Static l:SettingsModel.ModifierOptions}}" SelectedValuePath="Value" DisplayMemberPath="Label"
+                          SelectedValue="{Binding Modifier}" MinWidth="200" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE756;" Title="{l:T 'Terminal ($term)'}" Description="{l:T 'Program started by $mod+Enter.'}">
+                <TextBox Text="{Binding Terminal, UpdateSourceTrigger=LostFocus}" MinWidth="200" />
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Tiling}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE8A9;" Title="{l:T Autotiling}"
+                          Description="{l:T 'New windows split the focused window along its longer side (spiral). Off: classic i3 behaviour.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Autotiling}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE8A1;" Title="{l:T Default split direction}" Description="{l:T 'Direction of windows on a new workspace.'}">
+                <ComboBox ItemsSource="{Binding Source={x:Static l:SettingsModel.OrientationOptions}}" SelectedValuePath="Value" DisplayMemberPath="Label"
+                          SelectedValue="{Binding DefaultOrientation}" MinWidth="240" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE737;" Title="{l:T Layout of new workspaces}" Description="{l:T 'Tabbed or stacked workspaces show one window at a time.'}">
+                <ComboBox ItemsSource="{Binding Source={x:Static l:SettingsModel.WorkspaceLayoutOptions}}" SelectedValuePath="Value" DisplayMemberPath="Label"
+                          SelectedValue="{Binding WorkspaceLayout}" MinWidth="240" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE8B9;" Title="{l:T Remove unnecessary containers}"
+                          Description="{l:T 'Containers left with a single window are removed automatically.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding FlattenContainers}" />
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Focus}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE962;" Title="{l:T Focus follows mouse}" Description="{l:T 'The window under the mouse pointer gets the focus.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding FocusFollowsMouse}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE7F4;" Title="{l:T Move the mouse to the focused monitor}"
+                          Description="{l:T 'When the keyboard moves the focus to another monitor, the mouse pointer follows.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding MouseWarping}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE8AB;" Title="{l:T Wrap around at the edges}" Description="{l:T 'Moving the focus past the last window jumps to the first one.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding FocusWrapping}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE8EE;" Title="{l:T Workspace back and forth}"
+                          Description="{l:T 'Pressing the key of the current workspace returns to the previous one.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding AutoBackAndForth}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xEA8F;" Title="{l:T 'When an application activates itself'}"
+                          Description="{l:T 'For example a chat window that pops up on another workspace.'}">
+                <ComboBox ItemsSource="{Binding Source={x:Static l:SettingsModel.ActivationOptions}}" SelectedValuePath="Value" DisplayMemberPath="Label"
+                          SelectedValue="{Binding FocusOnActivation}" MinWidth="300" />
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Mouse}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE7C2;" Title="{l:T Drag tiled windows}"
+                          Description="{l:T 'Drop a window on another one to rearrange; drag an edge to resize the split.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding TilingDrag}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE759;" Title="{l:T '$mod + drag'}" Description="{l:T 'Hold $mod and drag with the left button to move, with the right button to resize.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding FloatingModifier}" />
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Windows}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE81C;" Title="{l:T Remember the layout}"
+                          Description="{l:T 'After restarting Mozaic, windows that still exist return to their places.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding RememberLayout}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE8A7;" Title="{l:T Keep floating windows on top}" Description="{l:T 'Floating windows stay above tiled windows (like i3).'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding FloatingAlwaysOnTop}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE7B3;" Title="{l:T On-screen display}" Description="{l:T 'Briefly show the workspace name or mode in the middle of the screen.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Osd}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xEA80;" Title="{l:T Show the guide at startup}" Description="{l:T 'Open the shortcut guide every time Mozaic starts.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Welcome}" />
+            </l:SettingRow>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
