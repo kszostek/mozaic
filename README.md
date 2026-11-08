@@ -14,17 +14,25 @@ a graphical settings app with a live keyboard cheat sheet, and crash safety.
 
 ## Quick start
 
-```powershell
-.\build.ps1            # build, run unit tests, publish to .\publish
-.\publish\Mozaic.exe   # start it (a tray icon appears, the guide opens)
-```
+Download `Mozaic-<version>-win-x64.zip` from [Releases](https://github.com/kszostek/mozaic/releases/latest), unpack it anywhere and run
+`Mozaic.exe`. The exes are not code-signed, so SmartScreen may ask once (*More info* → *Run anyway*).
 
 On first start a commented default config is written to `%USERPROFILE%\.config\mozaic\config` and the
 **guide** opens, showing every shortcut on a keyboard. Click the tray icon for the settings; right-click it for
 the menu (pause tiling, reload, *Start with Windows*, …).
 
+`MozaicSettings.exe` runs on the .NET 10 Desktop Runtime (Windows offers to install it if missing);
+`Mozaic.exe` and `mozaic-msg.exe` need nothing.
+
+To build it yourself:
+
+```powershell
+.\build.ps1            # build, run unit tests, publish to .\publish
+.\publish\Mozaic.exe   # start it (a tray icon appears, the guide opens)
+```
+
 Building needs the .NET 10 SDK and Visual Studio / Build Tools with *Desktop development with C++* (for
-NativeAOT). `MozaicSettings.exe` runs on the .NET 10 Desktop Runtime (Windows offers to install it if missing).
+NativeAOT).
 
 ## Keyboard shortcuts
 
@@ -195,3 +203,11 @@ powershell -File tests\input-test.ps1         # hotkeys, title-bar drag, $mod+dr
 The live tests run a separate instance (`--instance test --manage-only ^MZTEST --no-hotkeys`) that only manages
 its own test windows and aborts if anything else would be managed. `input-test.ps1` moves the mouse and sends keys
 for a few seconds.
+
+GitHub Actions builds and unit-tests every push. To publish a release, push a version tag — the workflow builds
+`Mozaic-<version>-win-x64.zip` and creates the release with the notes from `.github/release-notes.md`:
+
+```powershell
+git tag v0.2.0
+git push origin v0.2.0
+```

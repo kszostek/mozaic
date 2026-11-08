@@ -1,0 +1,8 @@
+<Project>
+  <!-- One version for every project. Release builds override it from the git tag (build.ps1 -Version). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Authors>kszostek</Authors>
+    <Copyright>Copyright © kszostek</Copyright>
+  </PropertyGroup>
+</Project>

@@ -11,7 +11,6 @@
     <RootNamespace>Mozaic.Settings</RootNamespace>
     <ApplicationIcon>..\Mozaic\mozaic.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.0.0</Version>
     <Product>Mozaic Settings</Product>
     <!-- WPF Fluent theme (ThemeMode) is marked experimental -->
     <NoWarn>$(NoWarn);WPF0001</NoWarn>
