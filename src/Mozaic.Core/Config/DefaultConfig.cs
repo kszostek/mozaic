@@ -25,6 +25,20 @@ smart_gaps off
 
 # 0 = rely on the Windows 11 colored window border; N = draw an N pixel frame
 default_border pixel 0
+# Rounded corners of that frame, in pixels
+border_radius 10
+
+# Title bars drawn by Mozaic above every tiled window (Windows apps have their
+# own, so this is off by default; tabbed/stacked containers always have tabs)
+titlebars no
+# Application icon at the start of title bars and tabs
+titlebar_icons yes
+# Rounded corners of title bars and tabs, in pixels
+titlebar_radius 6
+# Buttons on title bars and the active tab, acting on that tile:
+# split (where the next window opens), layout (split/stacked/tabbed),
+# floating, fullscreen, close — or none
+titlebar_buttons split layout floating fullscreen close
 
 default_orientation auto
 workspace_layout default
@@ -241,6 +255,8 @@ bar {
     # status_command powershell -NoProfile -File C:\path\to\status.ps1
     show_title yes
     workspace_icons yes
+    # Outline the icons of windows that share a tile
+    workspace_groups yes
 
     colors {
         background #000000

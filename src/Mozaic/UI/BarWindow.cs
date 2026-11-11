@@ -40,7 +40,7 @@ internal sealed class BarWindow : Win32Window
             User32.ShowWindow(Handle, C.SW_HIDE);
     }
 
-    private int S(int v) => (int)Math.Round(v * _output.Dpi / 96.0);
+    private int S(double v) => (int)Math.Round(v * _output.Dpi / 96.0);
 
     protected override void OnPaint(Canvas c)
     {
@@ -59,11 +59,17 @@ internal sealed class BarWindow : Win32Window
 
         int iconSize = Math.Max(12, Math.Min(S(16), c.Height - 2 * inset - S(6)));
         int iconGap = S(4);
+        int groupPad = S(3);
+        uint groupColor = cfg.GroupLinesColor ?? cfg.Focused.Indicator;
 
-        Rect Button(string label, WorkspaceColor wc, int minWidth = 0, List<IntPtr>? icons = null)
+        // Icons come in groups (one per tile); a group of several windows is outlined.
+        int GroupsWidth(List<(List<IntPtr> Icons, bool Outline)> groups) =>
+            groups.Sum(g => g.Icons.Count * (iconSize + iconGap) + (g.Outline ? 2 * groupPad + iconGap : 0));
+
+        Rect Button(string label, WorkspaceColor wc, int minWidth = 0, List<(List<IntPtr> Icons, bool Outline)>? groups = null)
         {
             int textW = c.MeasureWidth(label);
-            int iconsW = icons is { Count: > 0 } ? icons.Count * (iconSize + iconGap) : 0;
+            int iconsW = groups is { Count: > 0 } ? GroupsWidth(groups) : 0;
             int w = Math.Max(textW + 2 * pad + iconsW, minWidth);
             var r = new Rect(x, inset, x + w, c.Height - inset);
             c.Fill(r, wc.Background);
@@ -77,10 +83,21 @@ internal sealed class BarWindow : Win32Window
                 int left = r.Left + (r.Width - textW - iconsW) / 2;
                 c.Text(label, new Rect(left, r.Top, left + textW, r.Bottom), wc.Text, C.DT_LEFT);
                 int ix = left + textW + iconGap, iy = r.Top + (r.Height - iconSize) / 2;
-                foreach (var icon in icons!)
+                foreach (var (icons, outline) in groups!)
                 {
-                    IconCache.Draw(c.Hdc, icon, ix, iy, iconSize);
-                    ix += iconSize + iconGap;
+                    if (outline)
+                    {
+                        int gw = icons.Count * (iconSize + iconGap) - iconGap + 2 * groupPad;
+                        int top = Math.Max(r.Top + 1, iy - groupPad), bottom = Math.Min(r.Bottom - 1, iy + iconSize + groupPad);
+                        c.RoundFrame(new Rect(ix, top, ix + gw, bottom), S(4), groupColor, Math.Max(1, S(1.5)));
+                        ix += groupPad;
+                    }
+                    foreach (var icon in icons)
+                    {
+                        IconCache.Draw(c.Hdc, icon, ix, iy, iconSize);
+                        ix += iconSize + iconGap;
+                    }
+                    if (outline) ix += groupPad + iconGap;
                 }
             }
             x += w + spacing;
@@ -98,15 +115,24 @@ internal sealed class BarWindow : Win32Window
                     : ws == tree.FocusedWorkspace ? colors.FocusedWorkspace
                     : ws == _output.CurrentWorkspace ? colors.ActiveWorkspace
                     : colors.InactiveWorkspace;
-                List<IntPtr>? icons = null;
+                List<(List<IntPtr> Icons, bool Outline)>? groups = null;
                 if (bar.WorkspaceIcons)
                 {
-                    icons = Tree.WindowsIn(ws)
-                        .Select(n => n.Tag as ManagedWindow).OfType<ManagedWindow>()
-                        .DistinctBy(m => m.ProcessName, StringComparer.OrdinalIgnoreCase)
-                        .Take(6).Select(IconCache.Get).Where(i => i != 0).ToList();
+                    groups = new();
+                    int budget = 8;
+                    var tiles = bar.WorkspaceGroups ? WorkspaceTiles.Of(ws) : new List<List<Node>> { Tree.WindowsIn(ws).ToList() };
+                    foreach (var tile in tiles)
+                    {
+                        if (budget <= 0) break;
+                        var icons = tile.Select(n => n.Tag as ManagedWindow).OfType<ManagedWindow>()
+                            .DistinctBy(m => m.ProcessName, StringComparer.OrdinalIgnoreCase)
+                            .Select(IconCache.Get).Where(i => i != 0).Take(budget).ToList();
+                        if (icons.Count == 0) continue;
+                        budget -= icons.Count;
+                        groups.Add((icons, bar.WorkspaceGroups && tile.Count >= 2));
+                    }
                 }
-                var r = Button(label, wc, S(bar.WorkspaceMinWidth), icons);
+                var r = Button(label, wc, S(bar.WorkspaceMinWidth), groups);
                 _hits.Add((r, HitKind.Workspace, ws.Name));
             }
         }

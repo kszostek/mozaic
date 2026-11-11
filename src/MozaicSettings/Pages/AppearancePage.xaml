@@ -39,9 +39,39 @@
                     <TextBlock Text="{Binding BorderWidth}" Width="34" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 </StackPanel>
             </l:SettingRow>
+            <l:SettingRow Icon="&#xE71A;" Title="{l:T Rounding of the focus frame}" Description="{l:T 'Corner radius of the frame above, in pixels (0 = square).'}">
+                <StackPanel Orientation="Horizontal">
+                    <Slider Minimum="0" Maximum="30" Width="220" Value="{Binding BorderRadius}" IsSnapToTickEnabled="True" TickFrequency="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding BorderRadius}" Width="34" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </l:SettingRow>
             <l:SettingRow Icon="&#xE71A;" Title="{l:T Window corners}">
                 <ComboBox ItemsSource="{Binding Source={x:Static l:SettingsModel.CornerOptions}}" SelectedValuePath="Value" DisplayMemberPath="Label"
                           SelectedValue="{Binding CornerStyle}" MinWidth="220" />
+            </l:SettingRow>
+
+            <TextBlock Text="{l:T Title bars}" Style="{StaticResource SectionTitle}" />
+            <l:SettingRow Icon="&#xE737;" Title="{l:T Title bars above windows}"
+                          Description="{l:T 'Mozaic draws a title bar above every tiled window. Tabbed and stacked containers always have tabs, which look the same.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding TitleBars}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE71D;" Title="{l:T Application icon}" Description="{l:T 'Show the icon of the application at the start of title bars and tabs.'}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding TitleBarIcons}" />
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE71A;" Title="{l:T Rounding of title bars}" Description="{l:T 'Corner radius of title bars and tabs, in pixels (0 = square).'}">
+                <StackPanel Orientation="Horizontal">
+                    <Slider Minimum="0" Maximum="16" Width="220" Value="{Binding TitleBarRadius}" IsSnapToTickEnabled="True" TickFrequency="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding TitleBarRadius}" Width="34" TextAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </l:SettingRow>
+            <l:SettingRow Icon="&#xE8B0;" Title="{l:T Buttons}" Description="{l:T 'Buttons on title bars and on the active tab. Each acts on its own tile.'}">
+                <WrapPanel MaxWidth="460" HorizontalAlignment="Right">
+                    <CheckBox Content="{l:T 'Split (where the next window opens)'}" IsChecked="{Binding ButtonSplit}" Margin="0,0,16,4" />
+                    <CheckBox Content="{l:T 'Layout (split, stacked, tabbed)'}" IsChecked="{Binding ButtonLayout}" Margin="0,0,16,4" />
+                    <CheckBox Content="{l:T Floating}" IsChecked="{Binding ButtonFloating}" Margin="0,0,16,4" />
+                    <CheckBox Content="{l:T Full screen}" IsChecked="{Binding ButtonFullscreen}" Margin="0,0,16,4" />
+                    <CheckBox Content="{l:T Close}" IsChecked="{Binding ButtonClose}" Margin="0,0,16,4" />
+                </WrapPanel>
             </l:SettingRow>
 
             <TextBlock Text="{l:T Effects}" Style="{StaticResource SectionTitle}" />

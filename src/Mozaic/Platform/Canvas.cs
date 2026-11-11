@@ -3,12 +3,13 @@ using Mozaic.Native;
 
 namespace Mozaic.Platform;
 
-/// <summary>Double-buffered GDI drawing surface. Colors are 0xRRGGBB.</summary>
+/// <summary>GDI drawing surface: double-buffered for WM_PAINT, or direct (e.g. on a <see cref="LayeredSurface"/>). Colors are 0xRRGGBB.</summary>
 internal sealed unsafe class Canvas : IDisposable
 {
     private readonly IntPtr _target;
     private readonly IntPtr _bitmap;
     private readonly IntPtr _oldBitmap;
+    private readonly bool _direct;
     private IntPtr _oldFont;
 
     public Canvas(IntPtr targetDc, int width, int height)
@@ -20,6 +21,41 @@ internal sealed unsafe class Canvas : IDisposable
         _bitmap = Gdi32.CreateCompatibleBitmap(targetDc, Width, Height);
         _oldBitmap = Gdi32.SelectObject(Hdc, _bitmap);
         Gdi32.SetBkMode(Hdc, C.TRANSPARENT);
+    }
+
+    /// <summary>Draws straight into <paramref name="dc"/> (no buffer, nothing copied on dispose).</summary>
+    public static Canvas Direct(IntPtr dc, int width, int height) => new(dc, width, height, direct: true);
+
+    private Canvas(IntPtr dc, int width, int height, bool direct)
+    {
+        _direct = direct;
+        _target = dc;
+        Hdc = dc;
+        Width = Math.Max(1, width);
+        Height = Math.Max(1, height);
+        Gdi32.SetBkMode(Hdc, C.TRANSPARENT);
+    }
+
+    public void Line(int x1, int y1, int x2, int y2, uint rgb, int width = 1)
+    {
+        var pen = Gdi32.CreatePen(C.PS_SOLID, Math.Max(1, width), ToColorRef(rgb));
+        var old = Gdi32.SelectObject(Hdc, pen);
+        Gdi32.MoveToEx(Hdc, x1, y1, 0);
+        Gdi32.LineTo(Hdc, x2, y2);
+        Gdi32.SelectObject(Hdc, old);
+        Gdi32.DeleteObject(pen);
+    }
+
+    /// <summary>Outline of a rounded rectangle (nothing filled).</summary>
+    public void RoundFrame(Rect r, int radius, uint rgb, int width = 1)
+    {
+        var pen = Gdi32.CreatePen(C.PS_SOLID, Math.Max(1, width), ToColorRef(rgb));
+        var oldPen = Gdi32.SelectObject(Hdc, pen);
+        var oldBrush = Gdi32.SelectObject(Hdc, Gdi32.GetStockObject(C.NULL_BRUSH));
+        Gdi32.RoundRect(Hdc, r.Left, r.Top, r.Right, r.Bottom, radius * 2, radius * 2);
+        Gdi32.SelectObject(Hdc, oldBrush);
+        Gdi32.SelectObject(Hdc, oldPen);
+        Gdi32.DeleteObject(pen);
     }
 
     public IntPtr Hdc { get; }
@@ -123,6 +159,11 @@ internal sealed unsafe class Canvas : IDisposable
 
     public void Dispose()
     {
+        if (_direct)
+        {
+            if (_oldFont != 0) Gdi32.SelectObject(Hdc, _oldFont);
+            return;
+        }
         Gdi32.BitBlt(_target, 0, 0, Width, Height, Hdc, 0, 0, C.SRCCOPY);
         if (_oldFont != 0) Gdi32.SelectObject(Hdc, _oldFont);
         Gdi32.SelectObject(Hdc, _oldBitmap);

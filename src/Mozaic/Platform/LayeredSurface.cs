@@ -1,3 +1,4 @@
+using Mozaic.Core;
 using Mozaic.Native;
 
 namespace Mozaic.Platform;
@@ -13,6 +14,51 @@ internal sealed unsafe class LayeredSurface : IDisposable
     public uint* Bits { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
+
+    /// <summary>A memory DC with the buffer selected, for drawing with GDI (GDI leaves alpha undefined: see <see cref="ApplyRoundRect"/>).</summary>
+    public IntPtr Hdc => _dc;
+
+    public void Clear()
+    {
+        if (Bits != null) new Span<uint>(Bits, Width * Height).Clear();
+    }
+
+    /// <summary>
+    /// Turns what GDI drew inside <paramref name="shape"/> into an anti-aliased rounded rectangle: pixels outside
+    /// become transparent, the edge gets a <paramref name="borderWidth"/> outline in <paramref name="border"/>.
+    /// </summary>
+    public void ApplyRoundRect(Rect shape, double radius, uint? border = null, double borderWidth = 0)
+    {
+        int x0 = Math.Max(0, shape.Left), x1 = Math.Min(Width, shape.Right);
+        int y0 = Math.Max(0, shape.Top), y1 = Math.Min(Height, shape.Bottom);
+        double br = 0, bg = 0, bb = 0;
+        bool hasBorder = border is uint bc && borderWidth > 0;
+        if (hasBorder)
+        {
+            br = (border!.Value >> 16) & 0xFF;
+            bg = (border.Value >> 8) & 0xFF;
+            bb = border.Value & 0xFF;
+        }
+        for (int y = y0; y < y1; y++)
+        {
+            uint* row = Bits + y * Width;
+            for (int x = x0; x < x1; x++)
+            {
+                double d = ShapeMath.RoundRectDistance(x + 0.5, y + 0.5, shape, radius);
+                double outer = ShapeMath.Coverage(d);
+                uint p = row[x];
+                double r = (p >> 16) & 0xFF, g = (p >> 8) & 0xFF, b = p & 0xFF;
+                if (hasBorder)
+                {
+                    double inner = ShapeMath.Coverage(d + borderWidth);
+                    r = r * inner + br * (1 - inner);
+                    g = g * inner + bg * (1 - inner);
+                    b = b * inner + bb * (1 - inner);
+                }
+                row[x] = ((uint)(outer * 255 + 0.5) << 24) | ((uint)(r * outer + 0.5) << 16) | ((uint)(g * outer + 0.5) << 8) | (uint)(b * outer + 0.5);
+            }
+        }
+    }
 
     public void Resize(int width, int height)
     {
@@ -70,4 +116,21 @@ internal sealed unsafe class LayeredSurface : IDisposable
     }
 
     public void Dispose() => Free();
+}
+
+/// <summary>Anti-aliasing helpers for rounded shapes.</summary>
+internal static class ShapeMath
+{
+    /// <summary>Signed distance from a point to a rounded rectangle (negative inside).</summary>
+    public static double RoundRectDistance(double px, double py, Rect r, double radius)
+    {
+        double hw = r.Width / 2.0, hh = r.Height / 2.0;
+        radius = Math.Max(0, Math.Min(radius, Math.Min(hw, hh)));
+        double qx = Math.Abs(px - (r.Left + hw)) - (hw - radius), qy = Math.Abs(py - (r.Top + hh)) - (hh - radius);
+        double ox = Math.Max(qx, 0), oy = Math.Max(qy, 0);
+        return Math.Sqrt(ox * ox + oy * oy) + Math.Min(Math.Max(qx, qy), 0) - radius;
+    }
+
+    /// <summary>How much of a pixel is covered, from its center's signed distance to the edge.</summary>
+    public static double Coverage(double distance) => Math.Clamp(0.5 - distance, 0, 1);
 }

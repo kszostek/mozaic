@@ -51,10 +51,11 @@ internal sealed class Fixture
 
     public string Layout => Describe(Ws);
 
-    public void Compute(int inner = 0, int outer = 0) =>
+    public List<TabBarInfo> Compute(int inner = 0, int outer = 0, bool titleBars = false) =>
         LayoutEngine.Compute(Tree, _ => new LayoutSettings
         {
             InnerGap = inner, OuterTop = outer, OuterBottom = outer, OuterLeft = outer, OuterRight = outer, TabHeight = 20,
+            TitleBars = titleBars, TitleGap = 2,
         });
 }
 

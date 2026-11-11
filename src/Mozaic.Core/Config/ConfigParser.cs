@@ -340,6 +340,11 @@ public static class ConfigParser
             case "group_lines_color":
                 cfg.GroupLinesColor = ParseColor(rest.Trim());
                 break;
+            case "titlebars": cfg.TitleBars = ParseBool(rest); break;
+            case "titlebar_icons": cfg.TitleBarIcons = ParseBool(rest); break;
+            case "titlebar_radius": cfg.TitleBarRadius = Math.Clamp(ParsePx(rest), 0, 40); break;
+            case "border_radius": cfg.BorderRadius = Math.Clamp(ParsePx(rest), 0, 60); break;
+            case "titlebar_buttons": cfg.TitleBarButtons = ParseTitleBarButtons(rest); break;
             case "inactive_opacity":
                 ParseInactiveOpacity(cfg, rest);
                 break;
@@ -360,6 +365,19 @@ public static class ConfigParser
                 if (line.EndsWith('{')) st.Stack.Push((Block.Skip, ""));
                 throw new FormatException($"unknown directive '{word}'");
         }
+    }
+
+    /// <summary>titlebar_buttons "split layout floating fullscreen close" | none</summary>
+    private static List<string> ParseTitleBarButtons(string rest)
+    {
+        var names = string.Join(' ', CommandParser.Tokenize(rest))
+            .Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.ToLowerInvariant()).ToList();
+        if (names.Count == 1 && names[0] is "none" or "off" or "no") return new List<string>();
+        foreach (var n in names)
+            if (!MozaicConfig.AllTitleBarButtons.Contains(n))
+                throw new FormatException($"unknown title bar button '{n}' (use {string.Join(", ", MozaicConfig.AllTitleBarButtons)} or none)");
+        return names.Distinct().ToList();
     }
 
     /// <summary>inactive_opacity off | &lt;last used %&gt; [&lt;minimum %&gt;]</summary>
@@ -605,6 +623,7 @@ public static class ConfigParser
                 break;
             case "workspace_buttons": bar.WorkspaceButtons = ParseBool(rest); break;
             case "workspace_icons": bar.WorkspaceIcons = ParseBool(rest); break;
+            case "workspace_groups": bar.WorkspaceGroups = ParseBool(rest); break;
             case "binding_mode_indicator": bar.BindingModeIndicator = ParseBool(rest); break;
             case "strip_workspace_numbers": bar.StripWorkspaceNumbers = ParseBool(rest); break;
             case "strip_workspace_name": bar.StripWorkspaceName = ParseBool(rest); break;

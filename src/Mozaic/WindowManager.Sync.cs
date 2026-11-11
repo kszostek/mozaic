@@ -40,6 +40,8 @@ internal sealed partial class WindowManager
         SmartGaps = Config.SmartGaps,
         BorderWidth = Scale(output, Config.BorderWidth),
         TabHeight = TabHeightFor(output),
+        TitleBars = Config.TitleBars,
+        TitleGap = Scale(output, 2),
     };
 
     public int TabHeightFor(Node output) => Fonts.LineHeight(Config.Font.Size, output.Dpi) + Scale(output, 6);
@@ -96,6 +98,10 @@ internal sealed partial class WindowManager
         foreach (var mw in toHide)
             if (!mw.HiddenByUs) WindowOps.Hide(mw);
 
+        // Windows that went fullscreen or maximized by themselves cover their workspace's title bars.
+        var covered = _windows.Values.Where(w => (w.NativeFullscreen || w.NativeMaximized) && w.Node.Visible)
+            .Select(w => Tree.WorkspaceOf(w.Node)).ToHashSet();
+        if (covered.Count > 0) tabBars.RemoveAll(b => covered.Contains(Tree.WorkspaceOf(b.Container)));
         _tabs.Update(tabBars);
         UpdateBars();
         UpdateBorders();
@@ -221,8 +227,8 @@ internal sealed partial class WindowManager
         var output = Tree.OutputOf(win)!;
         int bw = Scale(output, Config.BorderWidth);
         var r = win.WindowRect;
-        _frame.ShowAround(new Rect(r.Left - bw, r.Top - bw, r.Right + bw, r.Bottom + bw), bw,
-            win.Urgent ? Config.Urgent.ChildBorder : Config.Focused.ChildBorder, mw.Hwnd);
+        _frame.ShowAround(new Rect(r.Left - bw, r.Top - bw, r.Right + bw, r.Bottom + bw), bw, Scale(output, Config.BorderRadius),
+            win.Urgent ? Config.Urgent.ChildBorder : Config.Focused.ChildBorder);
     }
 
     private void PersistHidden()

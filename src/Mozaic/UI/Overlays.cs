@@ -4,55 +4,110 @@ using Mozaic.Platform;
 
 namespace Mozaic.UI;
 
-/// <summary>Colored frame drawn around the focused tiled window ("default_border pixel N"). Click-through.</summary>
-internal sealed class FocusFrame : Win32Window
+/// <summary>
+/// Colored frame drawn around the focused tiled window ("default_border pixel N"), with rounded corners
+/// (border_radius). Four click-through layered strips (top, bottom, left, right) with smooth edges, so even a
+/// big window costs only a few thin buffers.
+/// </summary>
+internal sealed class FocusFrame
 {
-    private const uint KeyColor = 0xFF00FF;
-    private int _thickness;
-    private uint _color;
-    private Rect _rect;
+    private readonly FrameStrip[] _strips = { new(), new(), new(), new() };
+    private (Rect Outer, int Thickness, int Radius, uint Color) _last;
     private bool _visible;
 
-    public FocusFrame()
+    public void ShowAround(Rect outer, int thickness, int radius, uint color)
     {
-        Create(C.WS_EX_LAYERED | C.WS_EX_TRANSPARENT | C.WS_EX_TOOLWINDOW | C.WS_EX_NOACTIVATE, C.WS_POPUP, "Mozaic frame", new Rect(0, 0, 1, 1));
-        User32.SetLayeredWindowAttributes(Handle, Canvas.ToColorRef(KeyColor), 255, C.LWA_COLORKEY);
-    }
-
-    public void ShowAround(Rect outer, int thickness, uint color, IntPtr target)
-    {
-        bool changed = outer != _rect || thickness != _thickness || color != _color || !_visible;
-        _rect = outer;
-        _thickness = thickness;
-        _color = color;
+        var key = (outer, thickness, radius, color);
+        if (_visible && key == _last)
+        {
+            foreach (var s in _strips) s.Raise();
+            return;
+        }
+        _last = key;
         _visible = true;
-        User32.SetWindowPos(Handle, C.HWND_TOP, outer.Left, outer.Top, outer.Width, outer.Height,
-            C.SWP_NOACTIVATE | C.SWP_SHOWWINDOW);
-        if (changed) Invalidate();
+        radius = Math.Clamp(radius, 0, Math.Min(outer.Width, outer.Height) / 2);
+        var inner = outer.Inset(thickness);
+        int innerRadius = Math.Max(0, radius - thickness);
+        // Top and bottom strips are tall enough to contain the rounded corners.
+        int band = Math.Min(Math.Max(thickness, radius), outer.Height / 2);
+        var parts = new[]
+        {
+            new Rect(outer.Left, outer.Top, outer.Right, outer.Top + band),
+            new Rect(outer.Left, outer.Bottom - band, outer.Right, outer.Bottom),
+            new Rect(outer.Left, outer.Top + band, outer.Left + thickness, outer.Bottom - band),
+            new Rect(outer.Right - thickness, outer.Top + band, outer.Right, outer.Bottom - band),
+        };
+        for (int i = 0; i < 4; i++) _strips[i].Show(parts[i], outer, radius, inner, innerRadius, color);
     }
 
     public void Hide()
     {
         if (!_visible) return;
         _visible = false;
-        User32.ShowWindow(Handle, C.SW_HIDE);
+        foreach (var s in _strips) s.HideStrip();
     }
 
-    protected override void OnPaint(Canvas c)
+    public void Destroy()
     {
-        c.Fill(new Rect(0, 0, c.Width, c.Height), KeyColor);
-        c.Frame(new Rect(0, 0, c.Width, c.Height), _color, _thickness);
+        foreach (var s in _strips) s.Destroy();
     }
 
-    protected override bool WndProc(uint msg, IntPtr wParam, IntPtr lParam, out IntPtr result)
+    private sealed unsafe class FrameStrip : Win32Window
     {
-        if (NoActivate(msg, out result)) return true;
-        if (msg == C.WM_NCHITTEST)
+        private readonly LayeredSurface _surface = new();
+        private bool _shown;
+
+        public FrameStrip() => Create(C.WS_EX_LAYERED | C.WS_EX_TRANSPARENT | C.WS_EX_TOOLWINDOW | C.WS_EX_NOACTIVATE,
+            C.WS_POPUP, "Mozaic frame", new Rect(0, 0, 1, 1));
+
+        public void Show(Rect part, Rect outer, int radius, Rect inner, int innerRadius, uint color)
         {
-            result = C.HTTRANSPARENT;
-            return true;
+            if (part.Width <= 0 || part.Height <= 0)
+            {
+                HideStrip();
+                return;
+            }
+            _surface.Resize(part.Width, part.Height);
+            double cr = (color >> 16) & 0xFF, cg = (color >> 8) & 0xFF, cb = color & 0xFF;
+            for (int y = 0; y < part.Height; y++)
+            {
+                uint* row = _surface.Bits + y * part.Width;
+                double gy = part.Top + y + 0.5;
+                for (int x = 0; x < part.Width; x++)
+                {
+                    double gx = part.Left + x + 0.5;
+                    double a = ShapeMath.Coverage(ShapeMath.RoundRectDistance(gx, gy, outer, radius)) *
+                               (1 - ShapeMath.Coverage(ShapeMath.RoundRectDistance(gx, gy, inner, innerRadius)));
+                    row[x] = ((uint)(a * 255 + 0.5) << 24) | ((uint)(cr * a + 0.5) << 16) | ((uint)(cg * a + 0.5) << 8) | (uint)(cb * a + 0.5);
+                }
+            }
+            _surface.Present(Handle, part.Left, part.Top);
+            _shown = true;
+            Raise();
         }
-        return false;
+
+        public void Raise() =>
+            User32.SetWindowPos(Handle, C.HWND_TOP, 0, 0, 0, 0, C.SWP_NOMOVE | C.SWP_NOSIZE | C.SWP_NOACTIVATE | (_shown ? C.SWP_SHOWWINDOW : 0));
+
+        public void HideStrip()
+        {
+            if (!_shown) return;
+            _shown = false;
+            User32.ShowWindow(Handle, C.SW_HIDE);
+        }
+
+        protected override void OnDestroyed() => _surface.Dispose();
+
+        protected override bool WndProc(uint msg, IntPtr wParam, IntPtr lParam, out IntPtr result)
+        {
+            if (NoActivate(msg, out result)) return true;
+            if (msg == C.WM_NCHITTEST)
+            {
+                result = C.HTTRANSPARENT;
+                return true;
+            }
+            return false;
+        }
     }
 }
 

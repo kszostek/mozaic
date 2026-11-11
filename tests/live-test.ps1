@@ -278,6 +278,54 @@ try {
     Start-Sleep -Milliseconds 300
     Check 'reload turns the effect back on' (@(Wins | Where-Object { (Alpha $_) -lt 255 }).Count -eq 3)
 
+    Write-Host "Title bars:"
+    $instance = TestPid
+    (Get-Content $cfg) + 'titlebars yes' | Set-Content -Encoding UTF8 $cfg
+    Cmd 'reload' | Out-Null
+    Start-Sleep -Milliseconds 500
+    $tiled = @(Wins | Where-Object { -not $_.floating -and [MzTest.Win]::IsWindowVisible([IntPtr]$_.window) })
+    $headers = @(Visible $instance 'Mozaic tabs')
+    $ws = (Msg get_tree).nodes | ForEach-Object { $_.nodes } | Where-Object { $_.visible -and $_.nodes.Count -gt 0 } | Select-Object -First 1
+    Check 'a title bar above every tiled window' ($headers.Count -eq $tiled.Count) "$($headers.Count) title bars, $($tiled.Count) tiled windows ($(Layout))"
+    function HeaderOf($w) {
+        foreach ($h in Visible $instance 'Mozaic tabs') {
+            $r = New-Object MzTest.Win+RECT; [MzTest.Win]::GetWindowRect($h, [ref]$r) | Out-Null
+            if ([math]::Abs($r.Left - $w.actual_rect.x) -le 2 -and $r.Bottom -le $w.actual_rect.y -and $w.actual_rect.y - $r.Bottom -le 6) { return $h }
+        }
+    }
+    $b = Win 'MZTEST B'
+    $hb = HeaderOf $b
+    Check 'title bar sits on top of its window' ($null -ne $hb) "$($b.actual_rect | ConvertTo-Json -Compress)"
+    Add-Type -Namespace MzTest -Name Post -MemberDefinition '[DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);'
+    # Clicks a title bar button (counted from the right: 0 = close) with window messages, not the real mouse.
+    function ClickButton($h, [int]$fromRight) {
+        $r = New-Object MzTest.Win+RECT; [MzTest.Win]::GetWindowRect($h, [ref]$r) | Out-Null
+        $height = $r.Bottom - $r.Top; $s = $height / 24.0
+        $size = [math]::Min($height - [math]::Round(4 * $s), [math]::Round(26 * $s)); $bw = $size + [math]::Round(6 * $s)
+        $x = [int](($r.Right - $r.Left) - [math]::Round(3 * $s) - $bw * $fromRight - $bw / 2); $y = [int]($height / 2)
+        $lp = [IntPtr](($y -shl 16) -bor $x)
+        [MzTest.Post]::PostMessage($h, 0x201, [IntPtr]1, $lp) | Out-Null
+        [MzTest.Post]::PostMessage($h, 0x202, [IntPtr]0, $lp) | Out-Null
+        Start-Sleep -Milliseconds 500
+    }
+    if ($hb) {
+        ClickButton $hb 2
+        Check 'floating button makes the window float' ((Win 'MZTEST B').floating)
+        Cmd "[title='MZTEST B'] floating disable" | Out-Null
+        Start-Sleep -Milliseconds 300
+        $hb = HeaderOf (Win 'MZTEST B')
+        if ($hb) { ClickButton $hb 1 }
+        Check 'fullscreen button' ((Win 'MZTEST B').fullscreen -eq $true)
+        Check 'no title bars over a fullscreen window' ((Visible $instance 'Mozaic tabs').Count -eq 0)
+        Cmd "[title='MZTEST B'] fullscreen disable" | Out-Null
+    }
+    @(Get-Content $cfg | Where-Object { $_ -ne 'titlebars yes' }) | Set-Content -Encoding UTF8 $cfg
+    Cmd 'reload' | Out-Null
+    Start-Sleep -Milliseconds 400
+    Check 'title bars off again' ((Visible $instance 'Mozaic tabs').Count -eq 0)
+    $ok = $true; foreach ($x in Wins) { if (-not $x.floating -and -not (Near $x.rect $x.actual_rect)) { $ok = $false } }
+    Check 'windows take the space back' $ok
+
     Write-Host "External changes:"
     $c = Win 'MZTEST C'
     Add-Type -Namespace MzTest -Name Mv -MemberDefinition '[DllImport("user32.dll")] public static extern bool MoveWindow(IntPtr h, int x, int y, int w, int hh, bool r);'

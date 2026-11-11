@@ -54,6 +54,8 @@ public sealed class BarConfig
     public int WorkspaceMinWidth { get; set; }
     /// <summary>Draw the icons of the applications on each workspace button.</summary>
     public bool WorkspaceIcons { get; set; } = true;
+    /// <summary>Outline the icons of windows that share a tile on the workspace buttons.</summary>
+    public bool WorkspaceGroups { get; set; } = true;
     public BarColors Colors { get; } = new();
 }
 
@@ -116,7 +118,7 @@ public sealed class MozaicConfig
     /// <summary>Open the shortcut guide (settings app) when Mozaic starts.</summary>
     public bool Welcome { get; set; }
     /// <summary>
-    /// Animated "current" lines in the gaps between windows of the same container: "on" (flows after focus or
+    /// Animated "current" lines in the gaps between windows of the same tile: "on" (flows after focus or
     /// layout changes and while $mod is held, otherwise a static glow), "always" (flows all the time) or "off".
     /// </summary>
     public string GroupLines { get; set; } = "on";
@@ -128,6 +130,19 @@ public sealed class MozaicConfig
     public int InactiveOpacityMin { get; set; } = 70;
     /// <summary>Windows that always stay fully opaque.</summary>
     public List<Criteria> OpacityIgnore { get; } = new();
+
+    /// <summary>Mozaic draws a title bar above every tiled window (tabbed/stacked containers always have tabs).</summary>
+    public bool TitleBars { get; set; }
+    /// <summary>The application's icon at the start of title bars and tabs.</summary>
+    public bool TitleBarIcons { get; set; } = true;
+    /// <summary>Corner radius of title bars and tabs, in pixels at 100% scaling.</summary>
+    public int TitleBarRadius { get; set; } = 6;
+    /// <summary>Buttons on title bars and on the active tab, left to right (see <see cref="AllTitleBarButtons"/>).</summary>
+    public List<string> TitleBarButtons { get; set; } = new(AllTitleBarButtons);
+    /// <summary>Corner radius of the focus frame (default_border pixel N), in pixels at 100% scaling.</summary>
+    public int BorderRadius { get; set; }
+
+    public static readonly string[] AllTitleBarButtons = { "split", "layout", "floating", "fullscreen", "close" };
 
     public List<ConfigError> Errors { get; } = new();
 }

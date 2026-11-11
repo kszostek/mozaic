@@ -28,6 +28,11 @@
             <l:SettingRow Icon="&#xE71D;" Title="{l:T Application icons on workspace buttons}">
                 <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding WorkspaceIcons}" />
             </l:SettingRow>
+            <l:SettingRow Icon="&#xE945;" Title="{l:T Outline the windows of one tile}"
+                          Description="{l:T 'Icons of windows that share a tile get a common frame in the color of the current.'}"
+                          IsEnabled="{Binding WorkspaceIcons}">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding WorkspaceGroups}" />
+            </l:SettingRow>
             <l:SettingRow Icon="&#xE8C8;" Title="{l:T Hide workspace numbers}" Description="{l:T 'Show only the name of workspaces such as 2:web.'}">
                 <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding StripWorkspaceNumbers}" />
             </l:SettingRow>

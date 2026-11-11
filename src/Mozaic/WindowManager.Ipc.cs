@@ -119,6 +119,7 @@ internal sealed partial class WindowManager
                         w.WriteString("process", mw.ProcessName);
                         w.WriteString("workspace", Tree.WorkspaceOf(n)?.Name);
                         w.WriteBoolean("floating", n.InFloating);
+                        w.WriteBoolean("fullscreen", n.Fullscreen);
                         w.WriteBoolean("focused", Tree.FocusedWindow == n);
                         w.WriteBoolean("visible", n.Visible && !mw.HiddenByUs);
                         w.WriteBoolean("scratchpad", n.IsScratchpad);

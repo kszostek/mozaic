@@ -153,6 +153,25 @@ internal static partial class L
             "Linie w odstępach między oknami tego samego kafelka pokazują, które okna są razem. Gdy zmienia się fokus lub układ, płynie po nich prąd.");
         A("Color of the current", "Kolor prądu");
         A("Color of the group lines and the current flowing along them.", "Kolor linii grup i płynącego po nich prądu.");
+        A("Rounding of the focus frame", "Zaokrąglenie ramki");
+        A("Corner radius of the frame above, in pixels (0 = square).", "Promień narożników ramki powyżej, w pikselach (0 = kwadratowe).");
+        A("Title bars", "Nagłówki okien");
+        A("Title bars above windows", "Nagłówki nad oknami");
+        A("Mozaic draws a title bar above every tiled window. Tabbed and stacked containers always have tabs, which look the same.",
+            "Mozaic rysuje nagłówek nad każdym oknem w kafelkach. Kontenery z kartami i stosem zawsze mają karty, które wyglądają tak samo.");
+        A("Application icon", "Ikona aplikacji");
+        A("Show the icon of the application at the start of title bars and tabs.", "Pokazuj ikonę aplikacji na początku nagłówków i kart.");
+        A("Rounding of title bars", "Zaokrąglenie nagłówków");
+        A("Corner radius of title bars and tabs, in pixels (0 = square).", "Promień narożników nagłówków i kart, w pikselach (0 = kwadratowe).");
+        A("Buttons", "Przyciski");
+        A("Buttons on title bars and on the active tab. Each acts on its own tile.", "Przyciski na nagłówkach i na aktywnej karcie. Każdy działa na swój kafelek.");
+        A("Split (where the next window opens)", "Podział (gdzie otworzy się następne okno)");
+        A("Layout (split, stacked, tabbed)", "Układ (podział, stos, karty)");
+        A("Floating", "Pływające");
+        A("Full screen", "Pełny ekran");
+        A("Close", "Zamknij");
+        A("Outline the windows of one tile", "Obrysuj okna jednego kafelka");
+        A("Icons of windows that share a tile get a common frame in the color of the current.", "Ikony okien z tego samego kafelka dostają wspólną ramkę w kolorze prądu.");
         A("Flowing after changes and while $mod is held", "Prąd po zmianach i gdy trzymasz $mod");
         A("Always flowing", "Prąd przez cały czas");
         A("Fade windows you are not using", "Przygaszaj nieużywane okna");

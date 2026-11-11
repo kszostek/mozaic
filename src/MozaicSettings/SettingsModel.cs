@@ -279,6 +279,27 @@ public sealed class SettingsModel : Observable
 
     public uint GroupLinesColor { get => Parsed.GroupLinesColor ?? Parsed.Focused.Indicator; set => SetRaw("group_lines_color", Hex(value)); }
 
+    public int BorderRadius { get => Parsed.BorderRadius; set => SetRaw("border_radius", Math.Clamp(value, 0, 60).ToString(CultureInfo.InvariantCulture)); }
+
+    // ---- Title bars
+    public bool TitleBars { get => Parsed.TitleBars; set => SetBool("titlebars", value); }
+    public bool TitleBarIcons { get => Parsed.TitleBarIcons; set => SetBool("titlebar_icons", value); }
+    public int TitleBarRadius { get => Parsed.TitleBarRadius; set => SetRaw("titlebar_radius", Math.Clamp(value, 0, 40).ToString(CultureInfo.InvariantCulture)); }
+    public bool ButtonSplit { get => HasButton("split"); set => SetButton("split", value); }
+    public bool ButtonLayout { get => HasButton("layout"); set => SetButton("layout", value); }
+    public bool ButtonFloating { get => HasButton("floating"); set => SetButton("floating", value); }
+    public bool ButtonFullscreen { get => HasButton("fullscreen"); set => SetButton("fullscreen", value); }
+    public bool ButtonClose { get => HasButton("close"); set => SetButton("close", value); }
+
+    private bool HasButton(string name) => Parsed.TitleBarButtons.Contains(name);
+
+    private void SetButton(string name, bool on, [CallerMemberName] string? prop = null)
+    {
+        // Keep the standard order: split layout floating fullscreen close.
+        var list = MozaicConfig.AllTitleBarButtons.Where(b => b == name ? on : Parsed.TitleBarButtons.Contains(b)).ToList();
+        SetRaw("titlebar_buttons", list.Count == 0 ? "none" : string.Join(' ', list), prop: prop);
+    }
+
     public bool InactiveOpacityOn { get => Parsed.InactiveOpacity != null; set => SetOpacity(value ? Parsed.InactiveOpacity ?? 90 : null, Parsed.InactiveOpacityMin); }
 
     /// <summary>Opacity of the previously used window, in percent.</summary>
@@ -364,6 +385,7 @@ public sealed class SettingsModel : Observable
     public bool ShowTitle { get => GetBool("show_title", true, "bar"); set => SetBool("show_title", value, "bar"); }
     public bool WorkspaceButtons { get => GetBool("workspace_buttons", true, "bar"); set => SetBool("workspace_buttons", value, "bar"); }
     public bool WorkspaceIcons { get => GetBool("workspace_icons", true, "bar"); set => SetBool("workspace_icons", value, "bar"); }
+    public bool WorkspaceGroups { get => GetBool("workspace_groups", true, "bar"); set => SetBool("workspace_groups", value, "bar"); }
     public bool BindingModeIndicator { get => GetBool("binding_mode_indicator", true, "bar"); set => SetBool("binding_mode_indicator", value, "bar"); }
     public bool StripWorkspaceNumbers { get => GetBool("strip_workspace_numbers", false, "bar"); set => SetBool("strip_workspace_numbers", value, "bar"); }
 

@@ -70,6 +70,15 @@ internal sealed partial class WindowManager
 
     public bool CheatsheetVisible => _cheatsheet.IsVisible;
 
+    /// <summary>A title bar button: focuses the window and runs the command on it (e.g. "split toggle").</summary>
+    public void RunTileCommand(Node window, string command)
+    {
+        if (window.Parent == null || _stopping) return;
+        Tree.Focus(window);
+        RunCommand(command, fromUser: false);
+        RequestFocusSync(false);
+    }
+
     private void UpdateEffects()
     {
         TrackFocusHistory();

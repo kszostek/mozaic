@@ -11,10 +11,20 @@ public sealed class LayoutSettings
     public bool SmartGaps { get; set; }
     public int BorderWidth { get; set; }
     public int TabHeight { get; set; } = 24;
+    /// <summary>A title bar above every tiled window of a split container (titlebars yes).</summary>
+    public bool TitleBars { get; set; }
+    /// <summary>Space between a title bar and its window.</summary>
+    public int TitleGap { get; set; } = 2;
 }
 
-/// <summary>A visible tabbed/stacked container whose title bar has to be drawn.</summary>
-public readonly record struct TabBarInfo(Node Container, Rect Rect, bool Stacked, int RowHeight);
+/// <summary>
+/// A title bar to draw: the tabs of a visible tabbed/stacked container, or (with title bars on) the title bar of
+/// one window, in which case <see cref="Container"/> is the window itself.
+/// </summary>
+public readonly record struct TabBarInfo(Node Container, Rect Rect, bool Stacked, int RowHeight)
+{
+    public bool IsWindowTitle => Container.Kind == NodeKind.Window;
+}
 
 /// <summary>
 /// Computes the rectangles of every visible con. Gaps follow i3-gaps semantics:
@@ -22,7 +32,7 @@ public readonly record struct TabBarInfo(Node Container, Rect Rect, bool Stacked
 /// </summary>
 public static class LayoutEngine
 {
-    private readonly record struct Ctx(int A, int B, int Border, int TabHeight, List<TabBarInfo> Bars);
+    private readonly record struct Ctx(int A, int B, int Border, int TabHeight, List<TabBarInfo> Bars, bool TitleBars, int TitleGap);
 
     public static List<TabBarInfo> Compute(Tree tree, Func<Node, LayoutSettings> settingsFor)
     {
@@ -53,9 +63,12 @@ public static class LayoutEngine
         // Every leaf box is inset by A on its left/top and B on its right/bottom so that two
         // neighbours are exactly 'inner' apart; the workspace area is inset so edges get outer+inner.
         int a = inner / 2, b = inner - a;
-        var ctx = new Ctx(a, b, Math.Max(0, s.BorderWidth), Math.Max(8, s.TabHeight), bars);
+        var ctx = new Ctx(a, b, Math.Max(0, s.BorderWidth), Math.Max(8, s.TabHeight), bars, s.TitleBars, Math.Max(0, s.TitleGap));
         var area = ws.Rect.Inset(ol + b, ot + b, or + a, ob + a);
+        int firstBar = bars.Count;
         LayoutChildren(ws, area, ctx);
+        // A fullscreen window covers the workspace, including its title bars and tabs.
+        if (Tree.WindowsIn(ws).Any(w => w.Fullscreen)) bars.RemoveRange(firstBar, bars.Count - firstBar);
 
         foreach (var f in ws.Floating)
         {
@@ -90,6 +103,13 @@ public static class LayoutEngine
         if (n.Kind == NodeKind.Window)
         {
             var box = r.Inset(ctx.A, ctx.A, ctx.B, ctx.B);
+            // Windows in tabs/stacks already have a title (their tab); very short boxes keep all their space.
+            if (ctx.TitleBars && n.Parent is { IsSplit: true } && box.Height >= ctx.TabHeight * 3)
+            {
+                var header = new Rect(box.Left, box.Top, box.Right, box.Top + ctx.TabHeight);
+                ctx.Bars.Add(new TabBarInfo(n, header, false, ctx.TabHeight));
+                box = new Rect(box.Left, header.Bottom + ctx.TitleGap, box.Right, box.Bottom);
+            }
             n.WindowRect = ctx.Border > 0 ? box.Inset(ctx.Border) : box;
             return;
         }

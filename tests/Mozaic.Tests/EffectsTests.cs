@@ -84,6 +84,105 @@ public class GroupEdgeTests
     }
 }
 
+public class TitleBarTests
+{
+    [Fact]
+    public void EveryTiledWindowGetsATitleBarAboveIt()
+    {
+        var f = new Fixture();
+        f.Open("A");
+        f.Open("B");
+        f.Tree.Split(Orientation.Vertical);
+        f.Open("C");
+        var bars = f.Compute(inner: 10, titleBars: true);
+        Assert.Equal(3, bars.Count);
+        foreach (var name in new[] { "A", "B", "C" })
+        {
+            var bar = bars.Single(b => b.Container == f[name]);
+            Assert.True(bar.IsWindowTitle);
+            Assert.Equal(20, bar.Rect.Height);
+            Assert.Equal(f[name].WindowRect.Left, bar.Rect.Left);
+            Assert.Equal(f[name].WindowRect.Right, bar.Rect.Right);
+            Assert.Equal(bar.Rect.Bottom + 2, f[name].WindowRect.Top); // title gap
+        }
+        Assert.Empty(f.Compute(inner: 10, titleBars: false));
+        Assert.True(f["A"].WindowRect.Top < bars.Single(b => b.Container == f["A"]).Rect.Bottom);
+    }
+
+    [Fact]
+    public void TabsKeepTheirTabBarAndFullscreenHidesAll()
+    {
+        var f = new Fixture();
+        f.Open("A");
+        f.Open("B");
+        f.Tree.Split(Orientation.Vertical);
+        f.Open("C");
+        f.Tree.SetLayout(LayoutKind.Tabbed);
+        var bars = f.Compute(inner: 10, titleBars: true);
+        Assert.Single(bars, b => !b.IsWindowTitle);          // the tabs of B/C
+        Assert.Single(bars, b => b.Container == f["A"]);      // A's own title bar
+        Assert.DoesNotContain(bars, b => b.Container == f["B"] || b.Container == f["C"]);
+
+        f["A"].Fullscreen = true;
+        Assert.Empty(f.Compute(inner: 10, titleBars: true));
+    }
+
+    [Fact]
+    public void ConfigOptions()
+    {
+        var d = ConfigParser.Parse(DefaultConfig.Text);
+        Assert.Empty(d.Errors);
+        Assert.False(d.TitleBars);
+        Assert.True(d.TitleBarIcons);
+        Assert.Equal(6, d.TitleBarRadius);
+        Assert.Equal(10, d.BorderRadius);
+        Assert.Equal(MozaicConfig.AllTitleBarButtons, d.TitleBarButtons);
+        Assert.True(d.Bar!.WorkspaceGroups);
+
+        var cfg = ConfigParser.Parse("""
+            titlebars yes
+            titlebar_icons no
+            titlebar_radius 12px
+            border_radius 99
+            titlebar_buttons "close, floating"
+            bar {
+                workspace_groups no
+            }
+            """);
+        Assert.Empty(cfg.Errors);
+        Assert.True(cfg.TitleBars);
+        Assert.False(cfg.TitleBarIcons);
+        Assert.Equal(12, cfg.TitleBarRadius);
+        Assert.Equal(60, cfg.BorderRadius); // clamped
+        Assert.Equal(new[] { "close", "floating" }, cfg.TitleBarButtons);
+        Assert.False(cfg.Bar!.WorkspaceGroups);
+        Assert.Empty(ConfigParser.Parse("titlebar_buttons none").TitleBarButtons);
+        Assert.Single(ConfigParser.Parse("titlebar_buttons close minimize").Errors);
+        Assert.Equal(0, ConfigParser.Parse("set $x 1").BorderRadius);
+    }
+
+    [Fact]
+    public void WorkspaceTilesGroupWindowsForTheBar()
+    {
+        var f = new Fixture();
+        f.Open("A");
+        f.Open("B");
+        f.Tree.Split(Orientation.Vertical);
+        f.Open("C");
+        f.Open("F", floating: true);
+        var tiles = WorkspaceTiles.Of(f.Ws);
+        Assert.Equal(3, tiles.Count);
+        Assert.Equal(new[] { f["A"] }, tiles[0]);
+        Assert.Equal(new[] { f["B"], f["C"] }, tiles[1]);
+        Assert.Equal(new[] { f["F"] }, tiles[2]);
+
+        // Splitting the whole workspace wraps everything in one container: still the same tiles.
+        f.Tree.Focus(f.Ws);
+        f.Tree.Split(Orientation.Vertical);
+        Assert.Equal(3, WorkspaceTiles.Of(f.Ws).Count);
+    }
+}
+
 public class OpacityCurveTests
 {
     [Fact]

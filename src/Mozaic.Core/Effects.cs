@@ -57,6 +57,22 @@ public static class GroupEdges
     }
 }
 
+public static class WorkspaceTiles
+{
+    /// <summary>
+    /// The windows of a workspace grouped by tile: every child of the workspace (below a chain of only children)
+    /// is one tile, in layout order; floating windows are tiles of their own.
+    /// </summary>
+    public static List<List<Node>> Of(Node workspace)
+    {
+        var top = workspace;
+        while (top.Children.Count == 1 && top.Children[0].Kind == NodeKind.Container) top = top.Children[0];
+        var tiles = top.Children.Select(c => Tree.WindowsIn(c).Where(w => !w.InFloating).ToList()).Where(l => l.Count > 0).ToList();
+        foreach (var f in workspace.Floating) tiles.Add(Tree.WindowsIn(f).ToList());
+        return tiles;
+    }
+}
+
 /// <summary>How transparent a window is, by how recently it was used.</summary>
 public static class OpacityCurve
 {

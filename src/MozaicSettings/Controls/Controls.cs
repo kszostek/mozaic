@@ -233,15 +233,61 @@ public sealed class LayoutPreview : FrameworkElement
             new Rect(work.X + leftW, work.Y + work.Height / 2, work.Width - leftW, work.Height / 2),
         };
         double radius = m.CornerStyle switch { "square" => 0, "small" => 4 * s, _ => 8 * s };
+        // The two windows on the right share a tile: the group line runs in the gap between them.
+        if (cfg.GroupLines != "off" && inner >= 1)
+        {
+            uint lc = cfg.GroupLinesColor ?? cfg.Focused.Indicator;
+            double gy = boxes[1].Bottom;
+            dc.DrawRectangle(B(lc), null, new Rect(boxes[1].X + a + 2 * s, gy - Math.Max(1, inner * 0.18), boxes[1].Width - inner - 4 * s, Math.Max(1.5, inner * 0.36)));
+        }
+        double titleH = 24 * s, titleGap = 2 * s;
         for (int i = 0; i < boxes.Length; i++)
         {
             var bx = boxes[i];
             var r = new Rect(bx.X + a, bx.Y + a, Math.Max(4, bx.Width - inner), Math.Max(4, bx.Height - inner));
             bool focused = i == 0;
+            if (cfg.TitleBars && r.Height > titleH * 3)
+            {
+                var header = new Rect(r.X, r.Y, r.Width, titleH);
+                var cc = focused ? cfg.Focused : cfg.Unfocused;
+                double tr = Math.Min(cfg.TitleBarRadius * s, titleH / 2);
+                dc.DrawRoundedRectangle(B(cc.Background), new Pen(B(cc.Border), 1), header, tr, tr);
+                double hx = header.X + 7 * s;
+                if (cfg.TitleBarIcons)
+                {
+                    var icon = new Rect(hx, header.Y + (titleH - 13 * s) / 2, 13 * s, 13 * s);
+                    dc.DrawRoundedRectangle(B(i == 0 ? 0x3B82F6u : i == 1 ? 0xF59E0Bu : 0x22C55Eu), null, icon, 3 * s, 3 * s);
+                    hx = icon.Right + 6 * s;
+                }
+                var title = new FormattedText(L.T("Window") + " " + (i + 1), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+                    new Typeface("Segoe UI"), Math.Max(6, 11 * s), B(cc.Text), dpi);
+                dc.DrawText(title, new Point(hx, header.Y + (titleH - title.Height) / 2));
+                double bxr = header.Right - 6 * s;
+                var pen = new Pen(B(cc.Text), Math.Max(0.8, 1.1 * s));
+                for (int k = 0; k < cfg.TitleBarButtons.Count; k++)
+                {
+                    double g = 9 * s;
+                    var gr = new Rect(bxr - g, header.Y + (titleH - g) / 2, g, g);
+                    if (cfg.TitleBarButtons[cfg.TitleBarButtons.Count - 1 - k] == "close")
+                    {
+                        dc.DrawLine(pen, gr.TopLeft, gr.BottomRight);
+                        dc.DrawLine(pen, gr.TopRight, gr.BottomLeft);
+                    }
+                    else
+                    {
+                        dc.DrawRectangle(null, pen, gr);
+                    }
+                    bxr -= g + 9 * s;
+                }
+                r = new Rect(r.X, header.Bottom + titleGap, r.Width, Math.Max(4, r.Height - titleH - titleGap));
+            }
             uint border = focused ? cfg.Focused.ChildBorder : cfg.Unfocused.ChildBorder;
             double bw = cfg.BorderWidth > 0 && focused ? Math.Max(1.5, cfg.BorderWidth * s * 1.5) : 1.2;
             if (cfg.BorderWidth > 0 && focused)
-                dc.DrawRectangle(B(border), null, new Rect(r.X - bw, r.Y - bw, r.Width + 2 * bw, r.Height + 2 * bw));
+            {
+                double fr = cfg.BorderRadius * s * 1.5;
+                dc.DrawRoundedRectangle(B(border), null, new Rect(r.X - bw, r.Y - bw, r.Width + 2 * bw, r.Height + 2 * bw), fr, fr);
+            }
             dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromRgb(0xF7, 0xF7, 0xF8)), m.WindowBorderColors ? new Pen(B(border), focused ? 2 : 1) : null, r, radius, radius);
             dc.DrawRoundedRectangle(new SolidColorBrush(focused ? Color.FromRgb(0xE4, 0xE8, 0xEE) : Color.FromRgb(0xEE, 0xEE, 0xEF)), null,
                 new Rect(r.X + 1, r.Y + 1, r.Width - 2, Math.Min(r.Height - 2, 22 * s)), radius, radius);

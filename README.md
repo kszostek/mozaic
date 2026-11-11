@@ -73,8 +73,8 @@ because the editor changes only the lines it has to.
 |---|---|
 | **Guide** | Keyboard cheat sheet per modifier layer and binding mode (hover a key for the exact command), the basics, *show at startup* |
 | **General** | `$mod` (Alt/Win), terminal, autotiling, focus behaviour, mouse dragging, layout memory, on-screen display |
-| **Appearance** | Gaps, smart gaps, colored Windows 11 borders, focus frame, corner style, group lines and their color, fading of unused windows, font, window colors — with a live preview |
-| **Bar** | Position, height, workspace buttons and app icons, title, status blocks and date format, status program, colors, auto-hide the Windows taskbar |
+| **Appearance** | Gaps, smart gaps, colored Windows 11 borders, focus frame and its rounding, corner style, title bars (icon, rounding, buttons), group lines and their color, fading of unused windows, font, window colors — with a live preview |
+| **Bar** | Position, height, workspace buttons with app icons and tile outlines, title, status blocks and date format, status program, colors, auto-hide the Windows taskbar |
 | **Keyboard shortcuts** | Search, add, edit (press the keys to record them), delete; conflicts are marked |
 | **Window rules** | Pick a running window and choose: float, float on every workspace, open on workspace N, don't focus, don't manage, or any commands |
 | **Workspaces** | Names (e.g. `2:web`) and the monitor each workspace lives on |
@@ -103,6 +103,9 @@ desktops.
 | **Autotiling** | Optional spiral layout: new windows split the focused one along its longer side (the popular i3 add-on, built in). |
 | **No useless nesting** | Split containers left with one child are flattened automatically. |
 | **Windows 11 integration** | Focus shown with the native colored window border, optional square corners, invisible resize borders compensated so gaps are pixel-exact. |
+| **Title bars that control the tile** | Optional rounded title bars above every window (and the same look for tabs), with the app icon and buttons: where the next window opens, layout (split / stacked / tabbed), floating, fullscreen, close. |
+| **Rounded focus frame** | `default_border pixel N` with `border_radius` — smooth, anti-aliased corners. |
+| **Groups on the bar** | Workspace buttons outline the icons of windows that share a tile. |
 | **Mouse tiling** | Drag-and-drop re-tiling with preview, edge-drag resizing, `$mod`+drag. Snap Assist is dismissed after a tiled drag. |
 | **Launcher & command palette** | Fuzzy launcher over the whole Start menu (Store apps too) and `PATH`, ranked by usage; window switcher; `$mod+F1` lists every shortcut and command. |
 | **Cheat sheet while you hold the keys** | Hold `` $mod+` `` and every shortcut appears on a keyboard over your windows, colored by what it does; Shift switches to the `$mod+Shift` keys. |
@@ -143,6 +146,11 @@ group_lines on                    # on | always (current flows all the time) | o
 group_lines_color #2e9ef4         # default: the client.focused indicator color
 inactive_opacity 90 70            # previously used window %, oldest windows %; or off
 opacity_ignore [process="^mpv$"]  # windows that always stay opaque
+border_radius 10                  # rounded corners of the focus frame (default_border pixel N)
+titlebars no                      # title bars drawn by Mozaic above every tiled window
+titlebar_icons yes                # app icon at the start of title bars and tabs
+titlebar_radius 6                 # rounded corners of title bars and tabs
+titlebar_buttons split layout floating fullscreen close   # or none
 ignore [process="SomeOverlay"]    # never manage matching windows
 window_border_colors yes          # color native borders with client.* child_border colors
 corner_style default              # default | square | round | small
@@ -156,6 +164,7 @@ bar {
     datetime_format "ddd d MMM  HH:mm"     # .NET format, your locale
     status_command <program>               # or any i3bar-protocol / plain-text status program
     workspace_icons yes
+    workspace_groups yes                   # outline the icons of windows that share a tile
     show_title yes
 }
 ```
