@@ -64,6 +64,20 @@ internal static unsafe class InputHooks
         return m;
     }
 
+    /// <summary>
+    /// Whether $mod is held for the group-lines current. Alt means the left Alt only: the right one is AltGr,
+    /// used all the time to type Polish (and other) letters.
+    /// </summary>
+    private static bool WatchedHeld(Modifiers watch)
+    {
+        bool Down(int vk) => s_physDown[vk];
+        if (watch.HasFlag(Modifiers.Alt) && !(Down(0xA4) || Down(C.VK_MENU))) return false;
+        if (watch.HasFlag(Modifiers.Win) && !(Down(0x5B) || Down(0x5C))) return false;
+        if (watch.HasFlag(Modifiers.Ctrl) && !(Down(0xA2) || Down(0xA3) || Down(C.VK_CONTROL))) return false;
+        if (watch.HasFlag(Modifiers.Shift) && !(Down(0xA0) || Down(0xA1) || Down(C.VK_SHIFT))) return false;
+        return watch != Modifiers.None;
+    }
+
     public static void WatchModifier(Modifiers mods)
     {
         s_watchModifier = (int)mods;
@@ -195,10 +209,7 @@ internal static unsafe class InputHooks
 
         int watch = s_watchModifier;
         if (watch == 0 || !KeyNames.IsModifierVk(vk)) return;
-        var mods = PhysicalModifiers();
-        // AltGr (Ctrl+Alt, used to type Polish and other letters) doesn't count as holding Alt.
-        var w = (Modifiers)watch;
-        bool held = (mods & w) == w && (w.HasFlag(Modifiers.Ctrl) || !mods.HasFlag(Modifiers.Ctrl));
+        bool held = WatchedHeld((Modifiers)watch);
         if (held == s_watchHeld) return;
         s_watchHeld = held;
         var handler = OnModifierHeld;

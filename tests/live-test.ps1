@@ -232,6 +232,16 @@ try {
     Check 'active window is opaque' ($a.B -eq 255) "B=$($a.B)"
     Check 'previously used window is 90%' ($a.C -eq 230) "C=$($a.C)"
     Check 'older windows fade, not below 70%' ($a.A -lt 230 -and $a.A -ge 178 -and $a.D -lt 230 -and $a.D -ge 178 -and $a.A -ne $a.D) "A=$($a.A) D=$($a.D)"
+    # Smooth fading: sample B while it dims after the focus moves away from it.
+    $bh = [IntPtr](Win 'MZTEST B').window
+    $seen = New-Object 'System.Collections.Generic.HashSet[int]'
+    & $msg --instance test -r "[title='MZTEST C'] focus" | Out-Null
+    $sw = [Diagnostics.Stopwatch]::StartNew()
+    while ($sw.ElapsedMilliseconds -lt 700) { [void]$seen.Add([MzTest.Win]::Alpha($bh)); Start-Sleep -Milliseconds 4 }
+    $between = @($seen | Where-Object { $_ -gt 230 -and $_ -lt 255 })
+    Check 'opacity changes fade smoothly' ($between.Count -ge 3 -and [MzTest.Win]::Alpha($bh) -eq 230) "values: $(($seen | Sort-Object) -join ',')"
+    Cmd "[title='MZTEST B'] focus" | Out-Null
+    Start-Sleep -Milliseconds 300
     $instance = TestPid
     $ws = (Msg get_tree).nodes | ForEach-Object { $_.nodes } | Where-Object { $_.visible -and $_.nodes.Count -gt 0 } | Select-Object -First 1
     $expected = SplitGaps $ws

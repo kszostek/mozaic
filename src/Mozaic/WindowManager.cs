@@ -141,6 +141,7 @@ internal sealed partial class WindowManager
             Log.Error($"exit did not finish within {ExitTimeoutMs / 1000} s (stuck at: {_exitStep}); ending the process");
             foreach (var h in hidden)
                 if (User32.IsWindow(h)) User32.ShowWindowAsync(h, C.SW_SHOWNA);
+            _opacity.ForceOpaqueNow();
             Log.Close();
             Kernel32.TerminateProcess(Kernel32.GetCurrentProcess(), 3);
         }) { IsBackground = true, Name = "exit watchdog" };
@@ -161,6 +162,9 @@ internal sealed partial class WindowManager
             foreach (var mw in _windows.Values.Concat(_detached.Values.Select(d => d.Window)))
                 if (mw.HiddenByUs && User32.IsWindow(mw.Hwnd)) User32.ShowWindowAsync(mw.Hwnd, C.SW_SHOWNA);
         }
+        // Every window back to 100% at once (cannot block); the worker restores the styles later.
+        ExitStep("making windows fully visible");
+        _opacity.ForceOpaqueNow();
         ExitStep("saving the layout");
         try { SaveStateNow(); } catch (Exception e) { Log.Error("save state", e); }
         ExitStep("stopping the window events and hotkeys");

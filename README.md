@@ -109,8 +109,8 @@ desktops.
 | **Mouse tiling** | Drag-and-drop re-tiling with preview, edge-drag resizing, `$mod`+drag. Snap Assist is dismissed after a tiled drag. |
 | **Launcher & command palette** | Fuzzy launcher over the whole Start menu (Store apps too) and `PATH`, ranked by usage; window switcher; `$mod+F1` lists every shortcut and command. |
 | **Cheat sheet while you hold the keys** | Hold `` $mod+` `` and every shortcut appears on a keyboard over your windows, colored by what it does; Shift switches to the `$mod+Shift` keys. |
-| **See the groups** | Lines in the gaps join the windows of one tile — a part of the workspace you split into several windows (the focused tile brightest). A current flows along them when the focus or layout changes and while `$mod` is held — and costs nothing the rest of the time. Color: `group_lines_color`. |
-| **Fade what you aren't using** | The active window is opaque, the one used before it 90%, older ones fade further (down to 70%). Never leaves a window translucent, even if Mozaic is killed. |
+| **See the groups** | Lines in the gaps join the windows of one tile — a part of the workspace you split into several windows (the focused tile brightest). A current flows along them when the focus or layout changes and while `$mod` is held (the left Alt only: the right one is AltGr for typing letters) — and costs nothing the rest of the time. Color: `group_lines_color`. |
+| **Fade what you aren't using** | The active window is opaque, the one used before it 90%, older ones fade further (down to 70%) — with smooth transitions. Exiting makes every window fully visible at once, even one whose application hangs; if Mozaic is killed, the next start does it. |
 | **`focus last`** | Jump back to the previously focused window, on any workspace. |
 | **Bar with app icons, OSD** | Workspace buttons show the icons of their apps; switching workspace or mode flashes its name in the middle of the screen. |
 | **Diagnostics** | "Why isn't this window tiled?" — every window with Mozaic's reason (elevated, tool window, ignore rule, …). |
