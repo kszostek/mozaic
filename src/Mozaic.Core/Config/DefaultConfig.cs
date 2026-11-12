@@ -214,6 +214,8 @@ bindsym $mod+Shift+p move workspace to output left
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+r restart
 bindsym $mod+Shift+e confirm "Exit Mozaic? Windows on hidden workspaces will be shown again." exit
+# Exit Mozaic at once, without the question
+bindsym $mod+Shift+x exit
 
 # Resize mode
 mode "resize" {

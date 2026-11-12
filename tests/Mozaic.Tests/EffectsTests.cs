@@ -270,6 +270,25 @@ public class EffectsConfigTests
     }
 
     [Fact]
+    public void ExitShortcutForOlderConfigs()
+    {
+        var x = new KeyCombo(Modifiers.Alt | Modifiers.Shift, 'X');
+        var d = ConfigParser.Parse(DefaultConfig.Text);
+        var b = d.Bindings.Single(b => b.Combo == x && b.Mode == "default");
+        Assert.Equal("exit", b.Command);
+        Assert.False(b.Implicit);
+
+        // An older config (with "confirm ... exit" on $mod+Shift+e) also gets the direct one.
+        var old = ConfigParser.Parse("set $mod Alt\nbindsym $mod+Shift+e confirm \"Exit?\" exit");
+        Assert.True(old.Bindings.Single(b => b.Combo == x).Implicit);
+        Assert.Equal("exit", old.Bindings.Single(b => b.Combo == x).Command);
+
+        // Not when the keys are taken or a plain exit is bound elsewhere.
+        Assert.Equal("kill", ConfigParser.Parse("set $mod Alt\nbindsym $mod+Shift+x kill").Bindings.Single(b => b.Combo == x).Command);
+        Assert.DoesNotContain(ConfigParser.Parse("set $mod Alt\nbindsym $mod+F4 exit").Bindings, b => b.Combo == x);
+    }
+
+    [Fact]
     public void KeyboardLabelForCheatsheet()
     {
         var (label, cat) = KeyboardLabels.Describe("cheatsheet");

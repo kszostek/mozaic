@@ -10,6 +10,9 @@ internal static unsafe class Program
 {
     private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
 
+    /// <summary>Set when Main has finished cleanly (the exit watchdog waits for it).</summary>
+    public static readonly ManualResetEventSlim Finished = new();
+
     [STAThread]
     private static int Main(string[] args)
     {
@@ -100,6 +103,7 @@ internal static unsafe class Program
         Log.Close();
         try { mutex.ReleaseMutex(); }
         catch (ApplicationException) { }
+        Finished.Set();
         return 0;
     }
 

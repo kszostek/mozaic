@@ -65,6 +65,18 @@ internal static unsafe class WindowOps
 
     public static void Restore(IntPtr hwnd) => User32.ShowWindowAsync(hwnd, C.SW_SHOWNOACTIVATE);
 
+    /// <summary>
+    /// A no-op input event makes us "the process that received the last input", which lifts the foreground
+    /// lock without touching modifier key state (unlike the classic Alt-key trick).
+    /// </summary>
+    public static void AllowForeground()
+    {
+        INPUT input = default;
+        input.type = C.INPUT_MOUSE;
+        input.U.mi.dwExtraInfo = InjectedMarker;
+        User32.SendInput(1, &input, sizeof(INPUT));
+    }
+
     /// <summary>Gives a window the keyboard focus despite Windows' foreground lock.</summary>
     public static bool Focus(IntPtr hwnd)
     {
@@ -72,12 +84,7 @@ internal static unsafe class WindowOps
         if (User32.GetForegroundWindow() == hwnd) return true;
         if (User32.IsIconic(hwnd)) User32.ShowWindowAsync(hwnd, C.SW_RESTORE);
 
-        // A no-op input event makes us "the process that received the last input", which lifts the
-        // foreground lock without touching modifier key state (unlike the classic Alt-key trick).
-        INPUT input = default;
-        input.type = C.INPUT_MOUSE;
-        input.U.mi.dwExtraInfo = InjectedMarker;
-        User32.SendInput(1, &input, sizeof(INPUT));
+        AllowForeground();
         if (User32.SetForegroundWindow(hwnd) && User32.GetForegroundWindow() == hwnd) return true;
 
         // Fallback: attach to the foreground thread's input queue.

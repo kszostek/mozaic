@@ -15,6 +15,8 @@ internal sealed class AppOptions
     public string? DumpPath { get; private set; }
     public Regex? ManageOnly { get; private set; }
     public string? TestWindowTitle { get; private set; }
+    /// <summary>Test only: exiting gets stuck halfway, to check that the exit watchdog still ends the process.</summary>
+    public bool TestHangOnExit { get; private set; }
     public bool ShowHelp { get; private set; }
     public bool Replace { get; private set; }
 
@@ -50,6 +52,7 @@ internal sealed class AppOptions
                 case "--dump": o.DumpPath = Next(); break;
                 case "--manage-only": o.ManageOnly = new Regex(Next(), RegexOptions.CultureInvariant); break;
                 case "--test-window": o.TestWindowTitle = Next(); break;
+                case "--test-hang-on-exit": o.TestHangOnExit = true; break;
                 case "-h": case "--help": case "/?": o.ShowHelp = true; break;
                 default: throw new ArgumentException($"unknown option '{a}'");
             }

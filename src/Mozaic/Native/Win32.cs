@@ -693,6 +693,13 @@ internal static unsafe partial class Kernel32
     public static partial IntPtr GetModuleHandleW(string? name);
 
     [LibraryImport(Dll)]
+    public static partial IntPtr GetCurrentProcess();
+
+    [LibraryImport(Dll)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool TerminateProcess(IntPtr process, uint exitCode);
+
+    [LibraryImport(Dll)]
     public static partial uint GetCurrentThreadId();
 
     [LibraryImport(Dll)]

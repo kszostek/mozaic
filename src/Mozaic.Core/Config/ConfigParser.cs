@@ -401,20 +401,27 @@ public static class ConfigParser
     }
 
     /// <summary>
-    /// The shortcut cheat sheet is bound to $mod+` and $mod+Shift+` unless the config binds those keys or uses
-    /// the cheatsheet command itself, so that configs written before the feature existed get it too.
+    /// Shortcuts added after configs were written get bound for older configs too, unless the config binds those
+    /// keys or already uses the command: the cheat sheet on $mod+` and $mod+Shift+`, exiting Mozaic on $mod+Shift+x.
     /// </summary>
     private static void AddImplicitBindings(State st)
     {
         var cfg = st.Cfg;
-        if (cfg.Bindings.Any(b => b.Command.TrimStart().StartsWith("cheatsheet", StringComparison.OrdinalIgnoreCase))) return;
         var mod = cfg.Variables.TryGetValue("$mod", out var m) ? m : "Alt";
-        foreach (var text in new[] { mod + "+grave", mod + "+Shift+grave" })
+        if (!cfg.Bindings.Any(b => b.Command.TrimStart().StartsWith("cheatsheet", StringComparison.OrdinalIgnoreCase)))
         {
-            if (!KeyNames.TryParseCombo(text, st.CharToVk, false, out var combo, out _)) continue;
-            if (cfg.Bindings.Any(b => b.Mode == "default" && b.Combo == combo)) continue;
-            cfg.Bindings.Add(new Binding("default", combo, "cheatsheet", false, Implicit: true));
+            AddImplicit(st, mod + "+grave", "cheatsheet");
+            AddImplicit(st, mod + "+Shift+grave", "cheatsheet");
         }
+        if (!cfg.Bindings.Any(b => b.Command.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase)))
+            AddImplicit(st, mod + "+Shift+x", "exit");
+    }
+
+    private static void AddImplicit(State st, string keys, string command)
+    {
+        if (!KeyNames.TryParseCombo(keys, st.CharToVk, false, out var combo, out _)) return;
+        if (st.Cfg.Bindings.Any(b => b.Mode == "default" && b.Combo == combo)) return;
+        st.Cfg.Bindings.Add(new Binding("default", combo, command, false, Implicit: true));
     }
 
     private static void ParseBinding(State st, string mode, string rest, bool isCode)

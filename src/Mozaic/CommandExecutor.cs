@@ -753,6 +753,9 @@ internal sealed class CommandExecutor(WindowManager wm)
         var owner = wm.MainHandle;
         var thread = new Thread(() =>
         {
+            // A no-op input event lets this process take the foreground, so the question gets the keyboard
+            // (Enter = Yes) instead of appearing behind the focused window.
+            WindowOps.AllowForeground();
             int r = User32.MessageBoxW(0, question, "Mozaic", C.MB_YESNO | C.MB_ICONQUESTION | C.MB_TOPMOST | C.MB_SETFOREGROUND);
             if (r == C.IDYES) Dispatcher.Post(() => wm.RunCommand(command, true));
         }) { IsBackground = true, Name = "confirm" };

@@ -342,6 +342,29 @@ try {
     Check 'layout restored after restart' ($layoutBefore -eq $layoutAfter) "$layoutBefore -> $layoutAfter"
     Check 'all windows still managed' (@(Wins).Count -eq 4)
 
+    Write-Host "Exit never leaves the process behind:"
+    # A second instance (its own windows: MZHANG*) whose exit gets stuck on purpose.
+    $hcfg = Join-Path $tmp 'hang-config'
+    "set `$mod Alt`nwelcome no" | Set-Content -Encoding UTF8 $hcfg
+    Remove-Item -Recurse -Force (Join-Path $env:LOCALAPPDATA 'Mozaic\instances\hang') -ErrorAction SilentlyContinue
+    $hang = Start-Process $exe -ArgumentList '--instance', 'hang', '--config', "`"$hcfg`"", '--manage-only', '^MZHANG', '--no-hotkeys', '--no-tray', '--test-hang-on-exit' -PassThru
+    Start-Sleep -Seconds 2
+    $hw = Start-Process $exe -ArgumentList '--test-window', '"MZHANG A"' -PassThru
+    $testWindows += $hw
+    Start-Sleep -Seconds 1
+    $hw.Refresh(); $hh = $hw.MainWindowHandle
+    & $msg --instance hang 'move container to workspace 9' | Out-Null
+    Start-Sleep -Milliseconds 500
+    Check 'its window on another workspace is hidden' ($hh -ne 0 -and -not [MzTest.Win]::IsWindowVisible($hh))
+    $sw = [Diagnostics.Stopwatch]::StartNew()
+    & $msg --instance hang exit | Out-Null
+    $ended = $hang.WaitForExit(15000)
+    Check 'a stuck exit still ends the process' $ended "after $([int]$sw.Elapsed.TotalSeconds) s"
+    Check 'and shows the hidden window' ([MzTest.Win]::IsWindowVisible($hh))
+    $hlog = Get-Content (Join-Path $env:LOCALAPPDATA 'Mozaic\instances\hang\mozaic.log') -Raw
+    Check 'the log names the step that got stuck' ($hlog -match 'stuck at: --test-hang-on-exit')
+    if (-not $hang.HasExited) { $hang.Kill() }
+
     Write-Host "Closing:"
     Cmd "[title='MZTEST D'] kill" | Out-Null
     Start-Sleep -Milliseconds 500

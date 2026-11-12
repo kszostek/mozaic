@@ -117,18 +117,65 @@ internal sealed partial class WindowManager
             Dispatcher.SetTimeout(600, OpenSettings);
     }
 
+    private const int ExitTimeoutMs = 8000;
+    private volatile string _exitStep = "";
+
+    private void ExitStep(string step)
+    {
+        _exitStep = step;
+        Log.Debug("exit: " + step);
+    }
+
+    /// <summary>
+    /// Safety net: whatever blocks the main thread while exiting (a window or the shell that stops responding),
+    /// the process must not stay behind. After <see cref="ExitTimeoutMs"/> the hidden windows are shown and the
+    /// process ends; the log names the step that got stuck.
+    /// </summary>
+    private void StartExitWatchdog(bool restart)
+    {
+        var hidden = restart ? Array.Empty<IntPtr>()
+            : _windows.Values.Concat(_detached.Values.Select(d => d.Window)).Where(w => w.HiddenByUs).Select(w => w.Hwnd).ToArray();
+        var thread = new Thread(() =>
+        {
+            if (Program.Finished.Wait(ExitTimeoutMs)) return;
+            Log.Error($"exit did not finish within {ExitTimeoutMs / 1000} s (stuck at: {_exitStep}); ending the process");
+            foreach (var h in hidden)
+                if (User32.IsWindow(h)) User32.ShowWindowAsync(h, C.SW_SHOWNA);
+            Log.Close();
+            Kernel32.TerminateProcess(Kernel32.GetCurrentProcess(), 3);
+        }) { IsBackground = true, Name = "exit watchdog" };
+        thread.Start();
+    }
+
     /// <summary>Stops managing windows. With <paramref name="restart"/> a fresh instance takes over the layout.</summary>
     public void Exit(bool restart = false)
     {
         if (_stopping) return;
         _stopping = true;
         Log.Info(restart ? "restarting" : "exiting");
+        StartExitWatchdog(restart);
+        if (!restart)
+        {
+            // First what matters most: no window may stay hidden (asynchronous, cannot block).
+            ExitStep("showing hidden windows");
+            foreach (var mw in _windows.Values.Concat(_detached.Values.Select(d => d.Window)))
+                if (mw.HiddenByUs && User32.IsWindow(mw.Hwnd)) User32.ShowWindowAsync(mw.Hwnd, C.SW_SHOWNA);
+        }
+        ExitStep("saving the layout");
         try { SaveStateNow(); } catch (Exception e) { Log.Error("save state", e); }
+        ExitStep("stopping the window events and hotkeys");
         WinEvents.Stop();
         InputHooks.Stop();
+        ExitStep("stopping IPC and the status bar");
         _ipc?.Stop();
         _status.Stop();
         _launcher?.Close();
+        if (Options.TestHangOnExit)
+        {
+            ExitStep("--test-hang-on-exit");
+            Thread.Sleep(Timeout.Infinite);
+        }
+        ExitStep("restoring window borders and corners");
         if (restart)
         {
             ResetDecorations(showHidden: false);
@@ -153,8 +200,11 @@ internal sealed partial class WindowManager
             ResetDecorations(showHidden: true);
             _hidden.Delete();
         }
+        ExitStep("making windows opaque again");
         DestroyEffects(1500);
+        ExitStep("removing the tray icon");
         _tray?.Dispose();
+        ExitStep("closing Mozaic's own windows");
         foreach (var b in _bars.Values) b.Destroy();
         _bars.Clear();
         _tabs.DestroyAll();
@@ -163,6 +213,7 @@ internal sealed partial class WindowManager
         _osd.Destroy();
         _sink.Destroy();
         _main.Unregister();
+        ExitStep("leaving the message loop");
         User32.PostQuitMessage(0);
     }
 
@@ -173,6 +224,8 @@ internal sealed partial class WindowManager
         {
             if (!User32.IsWindow(mw.Hwnd)) continue;
             if (showHidden && mw.HiddenByUs) User32.ShowWindowAsync(mw.Hwnd, C.SW_SHOWNA);
+            // Changing the frame of a window that does not respond could wait for it; leave those alone.
+            if (User32.IsHungAppWindow(mw.Hwnd)) continue;
             if (mw.AppliedBorderColor != null) WindowOps.SetBorderColor(mw, null);
             if (mw.CornerApplied) WindowOps.SetCornerPreference(mw.Hwnd, "default");
         }

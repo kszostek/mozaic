@@ -49,10 +49,10 @@ Highlights: **hold `` $mod+` ``** to see this keyboard on screen (add Shift for 
 when you let go) · `$mod+Enter` terminal · `$mod+d` launcher · `$mod+Shift+d` window switcher · `$mod+F1`
 searchable list of all shortcuts and commands · `$mod+h/j/k/l` focus, add Shift to move · `$mod+1…0` workspaces ·
 `$mod+b`/`$mod+v` split · `$mod+w`/`$mod+s`/`$mod+e` tabbed/stacked/split · `$mod+f` fullscreen ·
-`$mod+Shift+space` floating · `$mod+o` previous window · `$mod+r` resize mode · `$mod+Shift+c` reload.
+`$mod+Shift+space` floating · `$mod+o` previous window · `$mod+r` resize mode · `$mod+Shift+c` reload · `$mod+Shift+x` exit Mozaic (`$mod+Shift+e` asks first).
 
-The cheat sheet works with older configs too: unless your config binds `` $mod+` `` / `` $mod+Shift+` `` or uses
-`cheatsheet` on other keys, Mozaic binds those two keys for it.
+The cheat sheet and the exit shortcut work with older configs too: unless your config binds those keys or already
+uses `cheatsheet` / a plain `exit` elsewhere, Mozaic binds `` $mod+` `` / `` $mod+Shift+` `` and `$mod+Shift+x` for them.
 
 ### Mouse
 
@@ -99,7 +99,7 @@ desktops.
 | | |
 |---|---|
 | **Layout survives restarts and crashes** | The tree is saved continuously; `restart`, a crash or relaunch restores it for windows that still exist. |
-| **Never loses a window** | Hidden windows are recorded on disk; if Mozaic is killed, the next start shows them again. Exiting always shows everything. |
+| **Never loses a window** | Hidden windows are recorded on disk; if Mozaic is killed, the next start shows them again. Exiting always shows everything, and never leaves Mozaic running: if a window or the shell stops responding while Mozaic exits, it shows the hidden windows and ends after 8 s anyway (the log says what got stuck). |
 | **Autotiling** | Optional spiral layout: new windows split the focused one along its longer side (the popular i3 add-on, built in). |
 | **No useless nesting** | Split containers left with one child are flattened automatically. |
 | **Windows 11 integration** | Focus shown with the native colored window border, optional square corners, invisible resize borders compensated so gaps are pixel-exact. |
